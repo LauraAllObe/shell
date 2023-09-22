@@ -6,6 +6,19 @@
 int main()
 {
 	while (1) {
+		//ENVIRONMENTAL VARIABLES FOR PROMPT (PT1)
+		const char *user = getenv("USER");
+		const char *machine = getenv("MACHINE");
+		const char *pwd = getenv("PWD");
+
+		//VARIABLES TO BE USED FOR ALL ERROR MESSAGES
+		char *errorMessage;
+		bool error = false;
+
+		//PRINTS PROMPT
+		printf("%s@%s:%s",user,machine,pwd);
+
+		//PROVIDED CODE
 		printf("> ");
 
 		/* input contains the whole command
@@ -18,6 +31,54 @@ int main()
 		tokenlist *tokens = get_tokens(input);
 		for (int i = 0; i < tokens->size; i++) {
 			printf("token %d: (%s)\n", i, tokens->items[i]);
+		}
+
+		//ITERATE THROUGH TOKENS FOR ENVIRONMENT VARIABLE EXPANSION (PT2)
+		for (int i = 0; i < tokens->size; i++)
+		{
+			//IF CURRENT TOKEN IS AN ENVIRONMENTAL VARIABLE
+			if(tokens->items[i][0]=='$')
+			{				
+				char variable[50];
+				printf(tokens->items[i]);
+				strncpy(variable, tokens->items[i] + 1, strlen(tokens->items[i]));
+				variable[strlen(variable)] = '\0';
+
+				//TESTING
+				//printf("This is the environmental variable:%s\n",variable);
+
+
+				const char *envvar = getenv(variable);
+
+				//ERROR CHECKING FOR BAD ENVIRONMENTAL VARIABLE
+				if(envvar == NULL)
+				{
+					errorMessage = "ERROR: BAD ENVIRONMENTAL VARIABLE";
+					error = true;
+				}
+				else
+				{
+					//IF ENVIRONMENTAL VARIABLE EXISTS, REALLOCATE TOKEN TO VARIABLE OF $___
+					tokens->items[i] = (char *)realloc(tokens->items[i], strlen(envvar) + 1);
+					strcpy(tokens->items[i], envvar);
+
+					//TESTING
+					//printf("This is the new token: %s\n", tokens->items[i]);
+				}
+
+				//TESTING
+				//printf("This is the variable: %s\n", envvar);
+			}
+		}
+
+		if(error)
+		{
+			//DISPLAY ANY ERROR MESSAGE HERE THAT HAPPENS BEFORE COMMAND EXECUTION
+			printf("%s\n",errorMessage);
+		}
+		else
+		{
+			//SPACE FOR FUTURE COMMANDS,ETC
 		}
 
 		free(input);

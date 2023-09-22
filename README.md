@@ -9,12 +9,15 @@
 ## Division of Labor
 
 ### Part 1: Prompt
-- **Responsibilities**: [Description]
-- **Assigned to**: 
+- **Responsibilities**: Greet the user with a prompt that indicates 
+the absolute working directory, the user name, and the machine name.
+- **Assigned to**: Laura Obermaier
 
 ### Part 2: Environment Variables
-- **Responsibilities**: [Description]
-- **Assigned to**: 
+- **Responsibilities**: Replace tokens prefixed with the dollar sign 
+character ($) with their corresponding values (before commands
+are processed.)
+- **Assigned to**: Laura Obermaier
 
 ### Part 3: Tilde Expansion
 - **Responsibilities**: [Description]
