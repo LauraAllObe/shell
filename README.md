@@ -20,11 +20,17 @@ are processed.)
 - **Assigned to**: Laura Obermaier
 
 ### Part 3: Tilde Expansion
-- **Responsibilities**: [Description]
-- **Assigned to**: 
+- **Responsibilities**: handle tilde expansion for ~/ and ~ 
+(should go to $HOME with or without /)
+- **Assigned to**: Jeyma Rodrìguez
 
 ### Part 4: $PATH Search
-- **Responsibilities**: [Description]
+- **Responsibilities**: employ string operations to extract and examine
+ each directory in the $PATH variable. In the event that the command is 
+ not found in any of the directories listed in $PATH, an error message 
+ should be displayed. Handling this scenario involves proper error 
+ detection and reporting, ensuring a clear indication when a command 
+ is not available within the directories specified in $PATH.
 - **Assigned to**: 
 
 ### Part 5: External Command Execution
