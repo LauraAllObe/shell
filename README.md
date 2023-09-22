@@ -1,53 +1,98 @@
-[![Review Assignment Due Date](https://classroom.github.com/assets/deadline-readme-button-24ddc0f5d75046c5622901739e7c5dd533143b0c8e959d652212380cedb1ea36.svg)](https://classroom.github.com/a/wtw9xmrw)
+# Shell
 
-Project 1: Shell
-================
+[Description]
 
-Team Member Names
-=================
-Jeyma Rodrìguez
-Autumn Harp
-Laura Obermaier
+## Group Members
+- **Jeyma Rodrìguez**: jdr21@fsu.edu
+- **Autumn Harp**: aom21a@fsu.edu
+- **Laura Obermaier**: lao21@fsu.edu
+## Division of Labor
 
+### Part 1: Prompt
+- **Responsibilities**: [Description]
+- **Assigned to**: 
 
-Division of Labor (first and last initial, e.g. E.T.)
-=====================================================
-Part 1: 
-Part 2: 
-Part 3: 
-Part 4: 
-Part 5: 
-Part 6: 
-Part 7: 
-Part 8: 
-Part 9: 
-Part 10: 
-Extra Credit: 
+### Part 2: Environment Variables
+- **Responsibilities**: [Description]
+- **Assigned to**: 
 
+### Part 3: Tilde Expansion
+- **Responsibilities**: [Description]
+- **Assigned to**: 
 
-File Listing and Descriptions
-=============================
+### Part 4: $PATH Search
+- **Responsibilities**: [Description]
+- **Assigned to**: 
 
+### Part 5: External Command Execution
+- **Responsibilities**: [Description]
+- **Assigned to**: 
 
+### Part 6: I/O Redirection
+- **Responsibilities**: [Description]
+- **Assigned to**: 
 
-How to Compile
-==============
+### Part 7: Piping
+- **Responsibilities**: [Description]
+- **Assigned to**: 
 
+### Part 8: Background Processing
+- **Responsibilities**: [Description]
+- **Assigned to**: 
 
+### Part 9: Internal Command Execution
+- **Responsibilities**: [Description]
+- **Assigned to**: 
 
-Bugs and Unfinished Portions
-============================
+### Part 10: External Timeout Executable
+- **Responsibilities**: [Description]
+- **Assigned to**: 
 
+### Extra Credit
+- **Responsibilities**: [Description]
+- **Assigned to**: 
 
+## File Listing
+```
+shell/
+│
+├── src/
+│ ├── main.c
+│ └── shell.c
+│
+├── include/
+│ └── shell.h
+│
+├── README.md
+└── Makefile
+```
+## How to Compile & Execute
 
-Special Considerations
-======================
+### Requirements
+- **Compiler**: e.g., `gcc` for C/C++, `rustc` for Rust.
+- **Dependencies**: List any libraries or frameworks necessary (rust only).
 
+### Compilation
+For a C/C++ example:
+```bash
+make
+```
+This will build the executable in ...
+### Execution
+```bash
+make run
+```
+This will run the program ...
 
+## Bugs
+- **Bug 1**: This is bug 1.
+- **Bug 2**: This is bug 2.
+- **Bug 3**: This is bug 3.
 
-Extra Credit Checklist
-====================================================================================
-[x]-Support unlimited number of pipes
-[x]-Support piping and I/O redirection in a single command
-[x]-Shell-ception: Execute your shell from within a running shell process repeatedly
+## Extra Credit
+- **Extra Credit 1**: [Extra Credit Option]
+- **Extra Credit 2**: [Extra Credit Option]
+- **Extra Credit 3**: [Extra Credit Option]
 
+## Considerations
+[Description]
