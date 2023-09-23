@@ -69,6 +69,38 @@ int main()
 				//TESTING
 				//printf("This is the variable: %s\n", envvar);
 			}
+
+			//TILDE EXPANSION
+			//Checking if the token starts with a tilde
+			if(tokens->items[i][1] == '~')
+			{
+				//If tilde stands alone or tilde is followed by a '/'
+				if(tokens->items[i][1] == '\0' || tokens->items[i][1] == '/')
+				{
+					//Get HOME evironment variable
+					char *home = getenv("HOME");
+
+					if(home)  //If $HOME is set
+					{
+						//Assign space for the expanded path
+						//using malloc() to allocate the requested memory and return pointer to it
+						char *expandedPath = (char *)malloc(strlen(home) + strlen(tokens->items[i]) + 1);
+						//creating expanded path
+						strcpy(expandedPath, home);
+						strcat(expandedPath, tokens->items[i] + 1);
+
+						//using free() to deallocates tokens previous memory
+						free(tokens->items[i]);
+						//Updating tokens with expanded path
+						tokens->items[i] = expandedPath;
+					}
+					else  //Show error message if $HOME is not set
+					{
+						errorMessage = "ERROR: Tilde expansion failed; HOME environment variable is not set.";
+						error = true;
+					}
+				}
+			}
 		}
 
 		if(error)
