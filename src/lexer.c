@@ -104,9 +104,12 @@ int main()
 		}
 
 		//ls check
-		if(tokens->items[0] == "ls")
-		{
-			char* result = execvp(tokens->items[1]);				//this is a CUSTOM VERSION not using any external libraries. Name is kept only for clarity of function.
+		printf("test %s",tokens->items[0]);
+		if(strcmp(tokens->items[0], "ls") == 0)
+		{printf("test2");
+putchar('\n');
+fflush(stdout);
+			char* result = execvpc(tokens->items[1]);				//this is a CUSTOM VERSION not using any external libraries. Name is kept only for clarity of function.
 			if(result == NULL)
 			{
 				printf("Error: Command not found");
@@ -194,7 +197,7 @@ void free_tokens(tokenlist *tokens) {
 	free(tokens->items);
 	free(tokens);
 }
-char* execvp (const char *filename/*, char *const argv[]*/)		//for future use w/ potential further commands 
+char* execvpc(const char *filename/*, char *const argv[]*/)		//for future use w/ potential further commands 
 {
 	char *pathOG = getenv("PATH");
 	char *path = (char *)malloc(strlen(pathOG) + 1);
@@ -210,11 +213,12 @@ char* execvp (const char *filename/*, char *const argv[]*/)		//for future use w/
 	int track = tokensp->size;
 	for(int i = 0; i < track; i++)
 	{
-		if(pathsearch(tokensp->items[i], filename)
-		{
+		if(pathsearch(tokensp->items[i], filename))
+			free_tokens(tokensp);
 			return tokensp->items[i];
 		}
 	}
+	free_tokens(tokensp);
 	return NULL;
 	
 	
@@ -224,13 +228,12 @@ bool pathsearch(char *dirname, const char *filename)
 	chdir(dirname);
 	FILE *dir = popen("ls -1", "r");
 	char buff[9000];
-	char *res = NULL;
 	while(fgets(buff, 9000, dir)!=NULL)
 	{
 		size_t len = strlen(buff);
-		if (len > 0 && buffer[len - 1] == '\n')
+		if (len > 0 && buff[len - 1] == '\n')
 		{
-            buffer[len - 1] = '\0';
+            buff[len - 1] = '\0';
         }
         if (strcmp(buff, filename) == 0)
         {
@@ -238,6 +241,7 @@ bool pathsearch(char *dirname, const char *filename)
         	return 1;
 		}
 	}
+	pclose(dir);
 	return 0;
 	
 }
