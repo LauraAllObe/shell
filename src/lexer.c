@@ -102,8 +102,36 @@ int main()
 				}
 			}
 		}
+    //********************************************************
+    //FIX THIS FOR PART 4, IT HAS A SEGMENTATION FAULT
+    /* char* newPath;
+    for (int i = 0; i < tokens->size; i++)
+    {
+      newPath = getPath(tokens->items[i]);
+      if(newPath)  //if newPath is not null
+      {
+        char* newToken = realloc(tokens->items[i], strlen(newPath) + 1);
+        if(newToken) //if realloc worked
+        {
+          tokens->items[i] = newToken;
+          strcpy(tokens->items[i], newPath);
+          printf("%s\n", tokens->items[i]);
+        }
+        else
+        {
+          fprintf(stderr, "Memory reallocation failed\n");
+          free(newPath);
+        }
+      }
+      else
+      {
+        printf("%s\n", tokens->items[i]);  //if no newPath print the original
+      }
+    } */
+    //********************************************************
 
-		//ls check
+    //Previous implementation for part 4
+		/* //ls check
 		printf("test %s",tokens->items[0]);
 		if(strcmp(tokens->items[0], "ls") == 0)
 		{printf("test2");
@@ -117,7 +145,8 @@ fflush(stdout);
 			{
 				//CODE FOR EXECUTION
 			}
-		}
+		} */
+
 		if(error)
 		{
 			//DISPLAY ANY ERROR MESSAGE HERE THAT HAPPENS BEFORE COMMAND EXECUTION
