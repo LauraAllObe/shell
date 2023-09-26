@@ -28,11 +28,11 @@ int main()
 		 */
 
 		char *input = get_input();
-		printf("whole input: %s\n", input);
+		//printf("whole input: %s\n", input);
 
 		tokenlist *tokens = get_tokens(input);
 		for (int i = 0; i < tokens->size; i++) {
-			printf("token %d: (%s)\n", i, tokens->items[i]);
+			//printf("token %d: (%s)\n", i, tokens->items[i]);
 		}
 
 		//ITERATE THROUGH TOKENS FOR ENVIRONMENT VARIABLE EXPANSION (PT2)
@@ -110,7 +110,7 @@ int main()
 			char * ptrPath = getenv("PATH");
 			char path[256];
 			strcpy(path, ptrPath);
-			printf("Path variable is: %s\n",path);
+			//printf("Path variable is: %s\n",path);
 			//delimit path variable by : (seperate directories)
 			char* token = strtok(path, ":");
 			char finalExecutable[256];
@@ -151,50 +151,6 @@ int main()
 			}
 			
 		}
-    //********************************************************
-    //FIX THIS FOR PART 4, IT HAS A SEGMENTATION FAULT
-     char* newPath;
-    for (int i = 0; i < tokens->size; i++)
-    {
-      newPath = getPath(tokens->items[i]);
-      if(newPath)  //if newPath is not null
-      {
-        char* newToken = realloc(tokens->items[i], strlen(newPath) + 1);
-        if(newToken) //if realloc worked
-        {
-          tokens->items[i] = newToken;
-          strcpy(tokens->items[i], newPath);			//NEW SEGFAULT HERE
-          printf("%s\n", tokens->items[i]);
-        }
-        else
-        {
-          fprintf(stderr, "Memory reallocation failed\n");
-          free(newPath);
-        }
-      }
-      else
-      {
-        printf("%s\n", tokens->items[i]);  //if no newPath print the original
-      }
-    } 
-    //********************************************************
-
-    //Previous implementation for part 4
-		/* //ls check
-		printf("test %s",tokens->items[0]);
-		if(strcmp(tokens->items[0], "ls") == 0)
-		{printf("test2");
-putchar('\n');
-fflush(stdout);
-			char* result = execvpc(tokens->items[1]);				//this is a CUSTOM VERSION not using any external libraries. Name is kept only for clarity of function.
-			if(result == NULL)
-			{
-				printf("Error: Command not found");
-			} else
-			{
-				//CODE FOR EXECUTION
-			}
-		} */
 
 		if(error)
 		{
@@ -275,51 +231,3 @@ void free_tokens(tokenlist *tokens) {
 	free(tokens->items);
 	free(tokens);
 }
-/*char* execvpc(const char *filename/*, char *const argv[])		//for future use w/ potential further commands 
-{
-	char *pathOG = getenv("PATH");
-	char *path = (char *)malloc(strlen(pathOG) + 1);
-	strcpy(path, pathOG);
-	tokenlist *tokensp = new_tokenlist();
-	char *tok = strtok(path, ":");
-	while (tok != NULL)
-	{
-		add_token(tokensp, tok);
-		tok = strtok(NULL, ":");
-	}
-	free(path);
-	int track = tokensp->size;
-	for(int i = 0; i < track; i++)
-	{
-		if(pathsearch(tokensp->items[i], filename))
-			free_tokens(tokensp);
-			return tokensp->items[i];
-		}
-	}
-	free_tokens(tokensp);
-	return NULL;
-	
-	
-}
-bool pathsearch(char *dirname, const char *filename)
-{
-	chdir(dirname);
-	FILE *dir = popen("ls -1", "r");
-	char buff[9000];
-	while(fgets(buff, 9000, dir)!=NULL)
-	{
-		size_t len = strlen(buff);
-		if (len > 0 && buff[len - 1] == '\n')
-		{
-            buff[len - 1] = '\0';
-        }
-        if (strcmp(buff, filename) == 0)
-        {
-        	pclose(dir);
-        	return 1;
-		}
-	}
-	pclose(dir);
-	return 0;
-	
-}*/
