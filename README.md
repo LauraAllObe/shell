@@ -35,7 +35,7 @@ are processed.)
 
 ### Part 5: External Command Execution
 - **Responsibilities**: [Description]
-- **Assigned to**: 
+- **Assigned to**: Autumn Harp
 
 ### Part 6: I/O Redirection
 - **Responsibilities**: [Description]
