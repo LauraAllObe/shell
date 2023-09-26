@@ -66,7 +66,10 @@ char *getPath(char *command)
       if (WIFEXITED(status) && WEXITSTATUS(status) == EXIT_FAILURE)
       {
         free(filePath);
-        token = strtok(NULL, ':');
+      	if(token != NULL)
+      	{
+      		token = strtok(NULL, ":");
+      	}
       } else 
         {
           free(pathCopy);
