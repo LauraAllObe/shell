@@ -2,6 +2,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <unistd.h>
 
 int main()
 {
@@ -10,6 +11,7 @@ int main()
 		const char *user = getenv("USER");
 		const char *machine = getenv("MACHINE");
 		const char *pwd = getenv("PWD");
+
 
 		//VARIABLES TO BE USED FOR ALL ERROR MESSAGES
 		char *errorMessage;
@@ -96,11 +98,58 @@ int main()
 					}
 					else  //Show error message if $HOME is not set
 					{
-						errorMessage = "ERROR: Tilde expansion failed; HOME environment variable is not set.";
+						errorMessage = "ERROR: Tilde expansion failed; HOME environment variable is not set.\n";
 						error = true;
 					}
 				}
 			}
+
+
+			//PATH SEARCH (PT4)
+			//get the whole $PATH variable
+			char * ptrPath = getenv("PATH");
+			char path[256];
+			strcpy(path, ptrPath);
+			printf("Path variable is: %s\n",path);
+			//delimit path variable by : (seperate directories)
+			char* token = strtok(path, ":");
+			char finalExecutable[256];
+			bool isExecutable = false;
+			//check if the token is executable (it is already a path)
+			if(access(tokens->items[i], F_OK) != 0 || access(tokens->items[i], X_OK) != 0)
+			{
+				//iterates through $PATH directories seperated by :
+				while(token != NULL)
+				{
+					//concatenate each $PATH directory with the command/token
+					char executable[256];
+					//printf("Tokenized path without executable: %s\n", token);
+    				strcpy(executable, token); // Copy the first part
+    				strcat(executable, "/"); // Concatenate a forward slash
+    				strcat(executable, tokens->items[i]);
+					//printf("Tokenized path with executable: %s\n", executable);
+					//if it is executable, copy to finalExecutable
+					if(access(executable, F_OK) == 0 && access(executable, X_OK) == 0)
+					{
+						isExecutable = true;
+						strcpy(finalExecutable, executable);
+					}
+					token = strtok(NULL, ":");
+				}
+				//if it is executable, copy final executable into token item
+				if(isExecutable)
+				{
+					tokens->items[i] = (char *)realloc(tokens->items[i], strlen(finalExecutable) + 1);
+					strcpy(tokens->items[i], finalExecutable);
+					//printf("~~New token:%s\n",tokens->items[i]);
+				}
+				else
+				{
+					errorMessage = "ERROR: Command not found or not executable.\n";
+					error = true;
+				}
+			}
+			
 		}
 
 		if(error)
