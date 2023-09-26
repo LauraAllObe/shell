@@ -31,7 +31,7 @@ are processed.)
  should be displayed. Handling this scenario involves proper error 
  detection and reporting, ensuring a clear indication when a command 
  is not available within the directories specified in $PATH.
-- **Assigned to**:  Autumn Harp
+- **Assigned to**: Autumn Harp, Jeyma Rodrìguez, Laura Obermaier
 
 ### Part 5: External Command Execution
 - **Responsibilities**: [Description]
