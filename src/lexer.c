@@ -104,7 +104,7 @@ int main()
 		}
     //********************************************************
     //FIX THIS FOR PART 4, IT HAS A SEGMENTATION FAULT
-    /* char* newPath;
+     char* newPath;
     for (int i = 0; i < tokens->size; i++)
     {
       newPath = getPath(tokens->items[i]);
@@ -114,7 +114,7 @@ int main()
         if(newToken) //if realloc worked
         {
           tokens->items[i] = newToken;
-          strcpy(tokens->items[i], newPath);
+          strcpy(tokens->items[i], newPath);			//NEW SEGFAULT HERE
           printf("%s\n", tokens->items[i]);
         }
         else
@@ -127,7 +127,7 @@ int main()
       {
         printf("%s\n", tokens->items[i]);  //if no newPath print the original
       }
-    } */
+    } 
     //********************************************************
 
     //Previous implementation for part 4
@@ -226,7 +226,7 @@ void free_tokens(tokenlist *tokens) {
 	free(tokens->items);
 	free(tokens);
 }
-char* execvpc(const char *filename/*, char *const argv[]*/)		//for future use w/ potential further commands 
+/*char* execvpc(const char *filename/*, char *const argv[])		//for future use w/ potential further commands 
 {
 	char *pathOG = getenv("PATH");
 	char *path = (char *)malloc(strlen(pathOG) + 1);
@@ -273,4 +273,4 @@ bool pathsearch(char *dirname, const char *filename)
 	pclose(dir);
 	return 0;
 	
-}
+}*/
