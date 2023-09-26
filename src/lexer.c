@@ -131,17 +131,21 @@ int main()
 					//if it is executable, copy to finalExecutable
 					if(access(executable, F_OK) == 0 && access(executable, X_OK) == 0)
 					{
-						isExecutable = true;
-						strcpy(finalExecutable, executable);
-					}
-					token = strtok(NULL, ":");
-				}
-				//if it is executable, copy final executable into token item
-				if(isExecutable)
-				{
-					tokens->items[i] = (char *)realloc(tokens->items[i], strlen(finalExecutable) + 1);
-					strcpy(tokens->items[i], finalExecutable);
-					//printf("~~New token:%s\n",tokens->items[i]);
+						tokens->items[i] = (char *)realloc(tokens->items[i], strlen(executable) + 1);
+                                                strcpy(tokens->items[i], executable);
+                                                //printf("~~New token:%s\n",tokens->items[i]);
+                                                isExecutable = true;
+                                                //strcpy(finalExecutable, executable);
+                                                break;
+                                }
+                                        token = strtok(NULL, ":");
+                                }
+                                //if it is executable, copy final executable into token item
+                                if(isExecutable)
+                                {
+                                        //tokens->items[i] = (char *)realloc(tokens->items[i], strlen(finalExecutable) + 1);
+                                        //strcpy(tokens->items[i], finalExecutable);
+                                        //printf("~~New token:%s\n",tokens->items[i]);
 				}
 				else
 				{
