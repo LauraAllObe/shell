@@ -142,6 +142,15 @@ int main()
 					tokens->items[i] = (char *)realloc(tokens->items[i], strlen(finalExecutable) + 1);
 					strcpy(tokens->items[i], finalExecutable);
 					//printf("~~New token:%s\n",tokens->items[i]);
+					//PT5
+					int child_status = fork();
+					if (child_status == 0)
+					{
+						//path, commands (I'm trying my best to learn to read c without it being like the DaVinci code)
+						execv(token, tokens->items);
+						//perror("execv"); //triggers when execv returns
+						exit(1); //kills child process
+					} 
 				}
 				else
 				{
