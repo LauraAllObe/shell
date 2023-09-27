@@ -39,7 +39,7 @@ are processed.)
 
 ### Part 6: I/O Redirection
 - **Responsibilities**: [Description]
-- **Assigned to**: 
+- **Assigned to**: Autumn Harp
 
 ### Part 7: Piping
 - **Responsibilities**: [Description]
