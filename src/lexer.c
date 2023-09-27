@@ -35,6 +35,54 @@ int main()
 			//printf("token %d: (%s)\n", i, tokens->items[i]);
 		}
 
+		//PT6
+		if((strcmp(tokens->items[0], "cmd")==0)||(strcmp(tokens->items[0], "CMD")==0))
+		{
+			//FILE OUT
+			if(strcmp(tokens->items[1], ">")==0)
+			{
+				if(tokens->size > 3)
+				{		//MULTISTEP
+					if(strcmp(tokens->items[3], "<")==0)
+					{
+						int rediri = open(tokens->items[4], O_RDONLY);
+						if(rediri == -1)
+						{
+							perror("The file requested does not exist or is not a regular file.");
+						} else
+						{
+							dup2(rediri, STDIN_FILENO);
+							close(rediri);
+						}
+					}
+				}
+				int rediro = open(tokens->items[2], O_CREAT | O_RDWR | O_TRUNC); //important note: logical or (||) will cause the program to panic. Use (|) for flag seperation.
+				dup2(rediro, STDOUT_FILENO);
+				close(rediro);
+			} //FILE IN
+			else if(strcmp(tokens->items[1], "<")==0)
+			{
+				int rediri = open(tokens->items[2], O_RDONLY);
+				if(rediri == -1)
+				{
+					perror("The file requested does not exist or is not a regular file.");
+				} else
+				{
+					dup2(rediri, STDIN_FILENO);
+					close(rediri);
+				}
+				if(tokens->size > 3)
+				{		//MULTISTEP
+					if(strcmp(tokens->items[3], ">")==0)
+					{
+						int rediro = open(tokens->items[4], O_CREAT | O_RDWR | O_TRUNC);
+						dup2(rediro, STDOUT_FILENO);
+						close(rediro);
+					}
+				}
+			}
+
+		}
 		//ITERATE THROUGH TOKENS FOR ENVIRONMENT VARIABLE EXPANSION (PT2)
 		for (int i = 0; i < tokens->size; i++)
 		{
@@ -131,17 +179,21 @@ int main()
 					//if it is executable, copy to finalExecutable
 					if(access(executable, F_OK) == 0 && access(executable, X_OK) == 0)
 					{
-						isExecutable = true;
-						strcpy(finalExecutable, executable);
-					}
-					token = strtok(NULL, ":");
-				}
-				//if it is executable, copy final executable into token item
-				if(isExecutable)
-				{
-					tokens->items[i] = (char *)realloc(tokens->items[i], strlen(finalExecutable) + 1);
-					strcpy(tokens->items[i], finalExecutable);
-					//printf("~~New token:%s\n",tokens->items[i]);
+						tokens->items[i] = (char *)realloc(tokens->items[i], strlen(executable) + 1);
+                                                strcpy(tokens->items[i], executable);
+                                                //printf("~~New token:%s\n",tokens->items[i]);
+                                                isExecutable = true;
+                                                //strcpy(finalExecutable, executable);
+                                                break;
+                                }
+                                        token = strtok(NULL, ":");
+                                }
+                                //if it is executable, copy final executable into token item
+                                if(isExecutable)
+                                {
+                                        //tokens->items[i] = (char *)realloc(tokens->items[i], strlen(finalExecutable) + 1);
+                                        //strcpy(tokens->items[i], finalExecutable);
+                                        //printf("~~New token:%s\n",tokens->items[i]);
 					//PT5
 					int child_status = fork();
 					if (child_status == 0)
@@ -151,6 +203,7 @@ int main()
 						//perror("execv"); //triggers when execv returns
 						exit(1); //kills child process
 					} 
+					
 				}
 				else
 				{
