@@ -54,8 +54,8 @@ are processed.)
 - **Assigned to**: 
 
 ### Part 10: External Timeout Executable
-- **Responsibilities**: [Description]
-- **Assigned to**: 
+- **Responsibilities**: Implement the external executable/command "mytimeout" that can be executed in our shell. This command is analogous to the Unix command "timeout" and offers enhanced control over command execution duration. 
+- **Assigned to**: Jeyma Rodriguez
 
 ### Extra Credit
 - **Responsibilities**: [Description]
