@@ -115,7 +115,6 @@ int main()
 			//printf("Path variable is: %s\n",path);
 			//delimit path variable by : (seperate directories)
 			char* token = strtok(path, ":");
-			//char finalExecutable[256];
 			//bool isExecutable = false;
 			//check if the token is executable (it is already a path)
 			if(access(tokens->items[i], F_OK) != 0 || access(tokens->items[i], X_OK) != 0)
@@ -137,7 +136,6 @@ int main()
                                         	strcpy(tokens->items[i], executable);
                                         	//printf("~~New token:%s\n",tokens->items[i]);
 						//isExecutable = true;
-						//strcpy(finalExecutable, executable);
 						break;	
 				}
 					token = strtok(NULL, ":");
@@ -165,18 +163,41 @@ int main()
 		}
 		else
 		{
-			int status;
-			pid_t pid = fork();
-			if (pid == 0)
+			//BACKGROUND PROCESSING
+			if(tokens->size != 0 && tokens->items[tokens->size -1][0] == '&')
 			{
-				if (access(tokens->items[0], X_OK) == 0)
-					execv(tokens->items[0], tokens->items);
-				else
-					printf("ERROR: Command not found or not executable.\n");
+				int status;
+				pid_t pid = fork();
+				if(pid == 0) {
+					tokens->items[tokens->size -1] = NULL;
+					if (access(tokens->items[0], X_OK) == 0)
+						execv(tokens->items[0], tokens->items);
+					else
+						printf("ERROR: Command not found or not executable.\n");
+
+					printf("\n[Job %d] done\n", getpid());
+					printf("\n");
+				}
+				else {
+					printf("[Job %d] [%d]\n", getpid(), getpid());
+					waitpid(pid, &status, WNOHANG);
+				}
 			}
-			else {
-				waitpid(pid, &status, 0);
-				//exit(0);
+			else
+			{
+				int status;
+				pid_t pid = fork();
+				if (pid == 0)
+				{
+					if (access(tokens->items[0], X_OK) == 0)
+						execv(tokens->items[0], tokens->items);
+					else
+						printf("ERROR: Command not found or not executable.\n");
+				}
+				else {
+					waitpid(pid, &status, 0);
+					//exit(0);
+				}
 			}
 		}
 

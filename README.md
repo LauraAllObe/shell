@@ -49,7 +49,7 @@ on piping, I/O redirection, and background processing.
 
 ### Part 8: Background Processing
 - **Responsibilities**: [Description]
-- **Assigned to**: 
+- **Assigned to**: Laura Obermaier
 
 ### Part 9: Internal Command Execution
 - **Responsibilities**: [Description]
