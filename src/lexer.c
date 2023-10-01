@@ -1,6 +1,7 @@
 #include <unistd.h>
 #include <sys/types.h>
 #include <sys/wait.h>
+#include <sys/stat.h>
 #include "lexer.h"
 #include <stdio.h>
 #include <stdlib.h>
@@ -8,12 +9,19 @@
 
 int main()
 {
+	//FOR PT9 INTERNAL COMMAND EXECUTION EXIT
+	int commandHistory = 0;
+	int totalCommandHistory = 0;
+	char *cmd0 = (char *)malloc(sizeof(char *) * 200);
+	char *cmd1 = (char *)malloc(sizeof(char *) * 200);
+	char *cmd2 = (char *)malloc(sizeof(char *) * 200);
+	char *tempcmd = (char *)malloc(sizeof(char *) * 200);
 	while (1) {
+
 		//ENVIRONMENTAL VARIABLES FOR PROMPT (PT1)
 		const char *user = getenv("USER");
 		const char *machine = getenv("MACHINE");
 		const char *pwd = getenv("PWD");
-
 
 		//VARIABLES TO BE USED FOR ALL ERROR MESSAGES
 		char *errorMessage;
@@ -30,11 +38,17 @@ int main()
 		 */
 
 		char *input = get_input();
-		//printf("whole input: %s\n", input);
-
 		tokenlist *tokens = get_tokens(input);
 		for (int i = 0; i < tokens->size; i++) {
-			//printf("token %d: (%s)\n", i, tokens->items[i]);
+		}
+
+		//FOR PT9 EXIT (INTERNAL COMMANDS)
+		free(tempcmd);
+		tempcmd = (char *)calloc(200, sizeof(char));
+		for(int i = 0; i < tokens->size; i++)
+		{
+			strncat(tempcmd, tokens->items[i], strlen(tokens->items[i]));
+			strncat(tempcmd, " ", strlen(" "));
 		}
 
 		//ITERATE THROUGH TOKENS FOR ENVIRONMENT VARIABLE EXPANSION (PT2)
@@ -47,10 +61,6 @@ int main()
 				printf(tokens->items[i]);
 				strncpy(variable, tokens->items[i] + 1, strlen(tokens->items[i]));
 				variable[strlen(variable)] = '\0';
-
-				//TESTING
-				//printf("This is the environmental variable:%s\n",variable);
-
 
 				const char *envvar = getenv(variable);
 
@@ -65,13 +75,7 @@ int main()
 					//IF ENVIRONMENTAL VARIABLE EXISTS, REALLOCATE TOKEN TO VARIABLE OF $___
 					tokens->items[i] = (char *)realloc(tokens->items[i], strlen(envvar) + 1);
 					strcpy(tokens->items[i], envvar);
-
-					//TESTING
-					//printf("This is the new token: %s\n", tokens->items[i]);
 				}
-
-				//TESTING
-				//printf("This is the variable: %s\n", envvar);
 			}
 
 			//TILDE EXPANSION
@@ -106,34 +110,42 @@ int main()
 				}
 			}
 
-
 			//PATH SEARCH (PT4)
 			//get the whole $PATH variable
 			char * ptrPath = getenv("PATH");
 			char path[256];
 			strcpy(path, ptrPath);
-			//printf("Path variable is: %s\n",path);
+
 			//delimit path variable by : (seperate directories)
 			char* token = strtok(path, ":");
 			//bool isExecutable = false;
 			//check if the token is executable (it is already a path)
-			if(access(tokens->items[i], F_OK) != 0 || access(tokens->items[i], X_OK) != 0)
+			bool wantToExpand = true;
+			if(strcmp(tokens->items[i], "cd") == 0 || strcmp(tokens->items[i], "exit") == 0
+			|| strcmp(tokens->items[i], "jobs") == 0 || (i != 0 
+			&& strcmp(tokens->items[i-1],"|") != 0 && strcmp(tokens->items[i-1],"<") != 0
+			&& strcmp(tokens->items[i-1],">") != 0))
+				wantToExpand = false;//to prevent unwanted variables from being expanded
+				
+			if((access(tokens->items[i], F_OK) != 0 || access(tokens->items[i], X_OK) != 0)
+			&& wantToExpand == true)
 			{
 				//iterates through $PATH directories seperated by :
 				while(token != NULL)
 				{
 					//concatenate each $PATH directory with the command/token
 					char executable[256];
-					//printf("Tokenized path without executable: %s\n", token);
     				strcpy(executable, token); // Copy the first part
     				strcat(executable, "/"); // Concatenate a forward slash
     				strcat(executable, tokens->items[i]);
-					//printf("Tokenized path with executable: %s\n", executable);
 					//if it is executable, copy to finalExecutable
 					if(access(executable, F_OK) == 0 && access(executable, X_OK) == 0)
 					{
 						tokens->items[i] = (char *)realloc(tokens->items[i], strlen(executable) + 1);
                                         	strcpy(tokens->items[i], executable);
+                                        	strcpy(tokens->items[i], executable);
+                                        	//printf("~~New token:%s\n",tokens->items[i]);
+						strcpy(tokens->items[i], executable);
                                         	//printf("~~New token:%s\n",tokens->items[i]);
 						//isExecutable = true;
 						break;	
@@ -145,7 +157,6 @@ int main()
 				//{
 					//tokens->items[i] = (char *)realloc(tokens->items[i], strlen(finalExecutable) + 1);
 					//strcpy(tokens->items[i], finalExecutable);
-					//printf("~~New token:%s\n",tokens->items[i]);
 				//}
 				//else
 				//{
@@ -154,8 +165,8 @@ int main()
 				//	error = true;
 				//}
 			}
-			
 		}
+
 		if(error)
 		{
 			//DISPLAY ANY ERROR MESSAGE HERE THAT HAPPENS BEFORE COMMAND EXECUTION
@@ -185,19 +196,109 @@ int main()
 			}
 			else
 			{
-				int status;
-				pid_t pid = fork();
-				if (pid == 0)
+				if(strcmp(tokens->items[0], "exit") == 0)
 				{
-					if (access(tokens->items[0], X_OK) == 0)
-						execv(tokens->items[0], tokens->items);
+					//waitpid(pid, &status, WNOHANG);
+					if(totalCommandHistory == 3)
+					{
+						printf("Last (%d) valid commands:\n", totalCommandHistory);
+						printf("[1]: %s\n", cmd0);
+						printf("[2]: %s\n", cmd1);
+						printf("[3]: %s\n", cmd2);
+					}
+					else if(totalCommandHistory > 0)
+					{
+						printf("Last valid command:\n");
+						if(totalCommandHistory%3 == 1)
+							printf("[1]: %s\n", cmd0);
+						else if(totalCommandHistory%3 == 2)
+							printf("[1]: %s\n", cmd1);
+						else if(totalCommandHistory%3 == 3)
+							printf("[1]: %s\n", cmd2);
+					}
 					else
-						printf("ERROR: Command not found or not executable.\n");
+					{
+						printf("No valid commands in history.\n");
+					}
+					exit(0);
 				}
-				else {
-					waitpid(pid, &status, 0);
-					//exit(0);
+				else if(strcmp(tokens->items[0], "cd") == 0)
+				{
+					char *currentDir = (char *)malloc(sizeof(char) * 200);
+					getcwd(currentDir, 200);//get current directory
+					printf("CURRENT DIRECTORY:%s\n", currentDir);
+					strncat(currentDir, tokens->items[1], strlen(tokens->items[1]));
+
+					if(tokens->size > 2 && strcmp(tokens->items[2], "|") != 0 && 
+					strcmp(tokens->items[2], "<") != 0 && strcmp(tokens->items[2], ">") != 0)
+					{
+						error = true;
+						printf("ERROR: too many arguments\n");
+					}
+					if (WHAT TO PUT HERE)
+					{
+						chdir(currentDir);
+					}
+					else
+					{
+						error = true;
+						printf("ERROR: directory does not exist\n");
+					}
+
+					
 				}
+				else if(strcmp(tokens->items[0], "jobs") == 0)
+				{
+
+				}
+				else if(access(tokens->items[0], F_OK) == 0 && access(tokens->items[0], X_OK) == 0)
+				{
+					int status;
+					pid_t pid = fork();
+					if (pid == 0)
+					{
+						execv(tokens->items[0], tokens->items);
+					}
+					else {
+						waitpid(pid, &status, 0);
+						//exit(0);
+					}
+				}
+				else
+				{
+					error = true;
+					printf("ERROR: Command not found or not executable.\n");
+				}
+				
+			}
+		}
+
+		//COPY COMMAND FOR PT9 INTERNAL COMMAND EXECUTION: EXIT
+		if(!error)//MAKE SURE TO SET ERROR TO 0 IF COMMAND NOT WORK
+		{
+			if(commandHistory == 0)
+			{
+				free(cmd0);
+				cmd0 = (char *)calloc(200, sizeof(char));
+				strncat(cmd0, tempcmd, strlen(tempcmd));
+				commandHistory++;
+				totalCommandHistory++;
+			}
+			else if(commandHistory == 1)
+			{
+				free(cmd1);
+				cmd1 = (char *)calloc(200, sizeof(char));
+				strncat(cmd1, tempcmd, strlen(tempcmd));
+				commandHistory++;
+				totalCommandHistory++;
+			}
+			else if(commandHistory == 2)
+			{
+				free(cmd2);
+				cmd2 = (char *)calloc(200, sizeof(char));
+				strncat(cmd2, tempcmd, strlen(tempcmd));
+				commandHistory = 0;
+				totalCommandHistory++;
 			}
 		}
 
