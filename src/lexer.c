@@ -1,8 +1,10 @@
+#include <unistd.h>
+#include <sys/types.h>
+#include <sys/wait.h>
 #include "lexer.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <unistd.h>
 
 int main()
 {
@@ -113,8 +115,8 @@ int main()
 			//printf("Path variable is: %s\n",path);
 			//delimit path variable by : (seperate directories)
 			char* token = strtok(path, ":");
-			char finalExecutable[256];
-			bool isExecutable = false;
+			//char finalExecutable[256];
+			//bool isExecutable = false;
 			//check if the token is executable (it is already a path)
 			if(access(tokens->items[i], F_OK) != 0 || access(tokens->items[i], X_OK) != 0)
 			{
@@ -131,27 +133,31 @@ int main()
 					//if it is executable, copy to finalExecutable
 					if(access(executable, F_OK) == 0 && access(executable, X_OK) == 0)
 					{
-						isExecutable = true;
-						strcpy(finalExecutable, executable);
-					}
+						tokens->items[i] = (char *)realloc(tokens->items[i], strlen(executable) + 1);
+                                        	strcpy(tokens->items[i], executable);
+                                        	//printf("~~New token:%s\n",tokens->items[i]);
+						//isExecutable = true;
+						//strcpy(finalExecutable, executable);
+						break;	
+				}
 					token = strtok(NULL, ":");
 				}
 				//if it is executable, copy final executable into token item
-				if(isExecutable)
-				{
-					tokens->items[i] = (char *)realloc(tokens->items[i], strlen(finalExecutable) + 1);
-					strcpy(tokens->items[i], finalExecutable);
+				//if(isExecutable)
+				//{
+					//tokens->items[i] = (char *)realloc(tokens->items[i], strlen(finalExecutable) + 1);
+					//strcpy(tokens->items[i], finalExecutable);
 					//printf("~~New token:%s\n",tokens->items[i]);
-				}
-				else
-				{
-					errorMessage = "ERROR: Command not found or not executable.\n";
-					error = true;
-				}
+				//}
+				//else
+				//{
+				//	if()
+				//	errorMessage = "ERROR: Command not found or not executable.\n";
+				//	error = true;
+				//}
 			}
 			
 		}
-
 		if(error)
 		{
 			//DISPLAY ANY ERROR MESSAGE HERE THAT HAPPENS BEFORE COMMAND EXECUTION
@@ -159,7 +165,19 @@ int main()
 		}
 		else
 		{
-			//SPACE FOR FUTURE COMMANDS,ETC
+			int status;
+			pid_t pid = fork();
+			if (pid == 0)
+			{
+				if (access(tokens->items[0], X_OK) == 0)
+					execv(tokens->items[0], tokens->items);
+				else
+					printf("ERROR: Command not found or not executable.\n");
+			}
+			else {
+				waitpid(pid, &status, 0);
+				//exit(0);
+			}
 		}
 
 		free(input);

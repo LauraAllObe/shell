@@ -34,8 +34,10 @@ are processed.)
 - **Assigned to**: Autumn Harp, Jeyma Rodrìguez, Laura Obermaier
 
 ### Part 5: External Command Execution
-- **Responsibilities**: [Description]
-- **Assigned to**: 
+- **Responsibilities**: execute external commands using execv(). This
+part only covers one command execution for now, as we are still working
+on piping, I/O redirection, and background processing.
+- **Assigned to**: Autumn Harp, Laura Obermaier
 
 ### Part 6: I/O Redirection
 - **Responsibilities**: [Description]
