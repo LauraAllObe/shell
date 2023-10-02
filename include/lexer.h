@@ -3,6 +3,7 @@
 #include <stdlib.h>
 #include <stdbool.h>
 
+
 typedef struct {
     char ** items;
     size_t size;
