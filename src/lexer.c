@@ -20,6 +20,28 @@ void execute_command(char *cmd, char **args)
 	}
 }
 
+//function to return full path or null if not found(part 7)
+char* get_full_path(char *cmd)
+{
+	char *path = getenv("PATH");
+	char *pathCpy = strdup(path);
+	char *dir = strtok(pathCpy, ":");
+
+	while(dir != NULL)
+	{
+		char executable[512];
+		snprintf(executable, sizeof(executable), "%s/%s", dir, cmd);
+		if(access(executable, F_OK) == 0 && access(executable, X_OK) ==0)
+		{
+			free(pathCpy);
+			return strdup(executable);  //return executable path
+		}
+		dir = strtok(NULL, ":");
+	}
+	free(pathCpy);
+	return NULL; //command not found, return null
+}
+
 int main()
 {
 	while (1) {
@@ -175,11 +197,16 @@ int main()
 		//PART 7 PIPING
 		//checking how many pipes are present
 		int pipeCount = 0;
+		int index1, index2 = 0, 0;
 		for(int i = 0; i < tokens->size; i++)
 		{
 			if(strcmp(tokens->items[i], "|") == 0)
 			{
 				pipeCount++;
+				if(pipeCount == 1)
+					index1 = i;
+				if(pipeCount == 2)
+					index2 = i;
 			}
 		}
 		//Handling execution commands based on number of pipes in command line
@@ -193,9 +220,16 @@ int main()
 				//close the read-end and also the write-end of pipe1 in the child process
 				close(pipe1[0]);
 				close(pipe1[1]);
-				execvp(tokens->items[0], &tokens->items[0]); //replaces the current child process image with the new process image
-				perror("execvp");
-				exit(EXIT_FAILURE);//if execvp fails, this ensures the child process terminates with a failure status
+				char *fullPath = get_full_path(tokens->items[0]);
+				if(fullPath)
+				{
+					execv(fullPath, &tokens->items[0]);
+					free(fullPath);
+				} else
+				{
+					perror("Command not found/not executable");
+					exit(EXIT_FAILURE);//if execv fails, the child process terminates with a failure status
+				}
 			}
 
 			if(fork() == 0)  //creates a new child process, 2nd child for command 2
@@ -204,9 +238,16 @@ int main()
 				dup2(pipe1[0], STDIN_FILENO);  
 				close(pipe1[0]);
 				close(pipe1[1]);  //closes the write-end of pipe1
-				execvp(tokens->items[2], &tokens->items[2]);
-				perror("execvp");
-				exit(EXIT_FAILURE);
+				char *fullPath = get_full_path(tokens->items[index1 + 1]);
+				if(fullPath)
+				{
+					execv(fullPath, &tokens->items[0]);
+					free(fullPath);
+				} else
+				{
+					perror("Command not found/not executable");
+					exit(EXIT_FAILURE);//if execv fails, the child process terminates with a failure status
+				}
 			}
 			//close both ends of pipe1 in the parent process
 			close(pipe1[0]); 
@@ -228,9 +269,16 @@ int main()
 				close(pipe1[1]);
 				close(pipe2[0]);	
 				close(pipe2[1]);	
-				execvp(tokens->items[0], &tokens->items[0]);
-				perror("execvp");	
-				exit(EXIT_FAILURE);
+				char *fullPath = get_full_path(tokens->items[0]);
+				if(fullPath)
+				{
+					execv(fullPath, &tokens->items[0]);
+					free(fullPath);
+				} else
+				{
+					perror("Command not found/not executable");
+					exit(EXIT_FAILURE);//if execv fails, the child process terminates with a failure status
+				}
 			}
 
 			if(fork() == 0)  //2nd child for command 2
@@ -242,9 +290,16 @@ int main()
 				close(pipe1[1]);
 				close(pipe2[0]); 
 				close(pipe2[1]); 
-				execvp(tokens->items[2], &tokens->items[2]);
-				perror("execvp");
-				exit(EXIT_FAILURE);
+				char *fullPath = get_full_path(tokens->items[index1 + 1]);
+				if(fullPath)
+				{
+					execv(fullPath, &tokens->items[0]);
+					free(fullPath);
+				} else
+				{
+					perror("Command not found/not executable");
+					exit(EXIT_FAILURE);//if execv fails, the child process terminates with a failure status
+				}
 			}
 
 			if(fork() == 0)  //3rd child for command 3
@@ -255,9 +310,16 @@ int main()
 				close(pipe1[1]);
 				close(pipe2[0]);
 				close(pipe2[1]);
-				execvp(tokens->items[4], &tokens->items[4]);
-				perror("execvp");
-				exit(EXIT_FAILURE);
+				char *fullPath = get_full_path(tokens->items[index2 + 1]);
+				if(fullPath)
+				{
+					execv(fullPath, &tokens->items[0]);
+					free(fullPath);
+				} else
+				{
+					perror("Command not found/not executable");
+					exit(EXIT_FAILURE);//if execv fails, the child process terminates with a failure status
+				}
 			}
 			//in parent process, close both ends of pipe1 and pipe2
 			close(pipe1[0]);
