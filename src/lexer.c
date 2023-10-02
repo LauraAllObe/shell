@@ -1,7 +1,7 @@
 #include <unistd.h>
 #include <sys/types.h>
 #include <sys/wait.h>
-#include "include/lexer.h"
+#include "lexer.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -147,27 +147,31 @@ int main()
 					//if it is executable, copy to finalExecutable
 					if(access(executable, F_OK) == 0 && access(executable, X_OK) == 0)
 					{
-						isExecutable = true;
-						strcpy(finalExecutable, executable);
-					}
+						tokens->items[i] = (char *)realloc(tokens->items[i], strlen(executable) + 1);
+                                        	strcpy(tokens->items[i], executable);
+                                        	//printf("~~New token:%s\n",tokens->items[i]);
+						//isExecutable = true;
+						//strcpy(finalExecutable, executable);
+						break;	
+				}
 					token = strtok(NULL, ":");
 				}
 				//if it is executable, copy final executable into token item
-				if(isExecutable)
-				{
-					tokens->items[i] = (char *)realloc(tokens->items[i], strlen(finalExecutable) + 1);
-					strcpy(tokens->items[i], finalExecutable);
+				//if(isExecutable)
+				//{
+					//tokens->items[i] = (char *)realloc(tokens->items[i], strlen(finalExecutable) + 1);
+					//strcpy(tokens->items[i], finalExecutable);
 					//printf("~~New token:%s\n",tokens->items[i]);
-				}
-				else
-				{
-					errorMessage = "ERROR: Command not found or not executable.\n";
-					error = true;
-				}
+				//}
+				//else
+				//{
+				//	if()
+				//	errorMessage = "ERROR: Command not found or not executable.\n";
+				//	error = true;
+				//}
 			}
 			
 		}
-
 		//PART 7 PIPING
 		//checking how many pipes are present
 		int pipeCount = 0;

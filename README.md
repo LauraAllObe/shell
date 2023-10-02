@@ -1,3 +1,4 @@
+[![Review Assignment Due Date](https://classroom.github.com/assets/deadline-readme-button-24ddc0f5d75046c5622901739e7c5dd533143b0c8e959d652212380cedb1ea36.svg)](https://classroom.github.com/a/wtw9xmrw)
 # Shell
 
 [Description]
@@ -34,8 +35,10 @@ are processed.)
 - **Assigned to**: Autumn Harp, Jeyma Rodrìguez, Laura Obermaier
 
 ### Part 5: External Command Execution
-- **Responsibilities**: [Description]
-- **Assigned to**: 
+- **Responsibilities**: execute external commands using execv(). This
+part only covers one command execution for now, as we are still working
+on piping, I/O redirection, and background processing.
+- **Assigned to**: Autumn Harp, Laura Obermaier
 
 ### Part 6: I/O Redirection
 - **Responsibilities**: [Description]
