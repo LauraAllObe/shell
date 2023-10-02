@@ -18,10 +18,14 @@ int main()
 	char *tempcmd = (char *)malloc(sizeof(char *) * 200);
 	while (1) {
 
+		size_t size = 0;
+		size = pathconf(".", _PC_PATH_MAX);
 		//ENVIRONMENTAL VARIABLES FOR PROMPT (PT1)
 		const char *user = getenv("USER");
 		const char *machine = getenv("MACHINE");
-		const char *pwd = getenv("PWD");
+		char *pwd = NULL;		
+		if ((pwd = (char *)malloc((size_t)size)) != NULL) 
+        	getcwd(pwd, (size_t)size);
 
 		//VARIABLES TO BE USED FOR ALL ERROR MESSAGES
 		char *errorMessage;
@@ -224,32 +228,29 @@ int main()
 				}
 				else if(strcmp(tokens->items[0], "cd") == 0)
 				{
-					char *currentDir = (char *)malloc(sizeof(char) * 200);
-					getcwd(currentDir, 200);//get current directory
-					printf("CURRENT DIRECTORY:%s\n", currentDir);
-					strncat(currentDir, tokens->items[1], strlen(tokens->items[1]));
-
 					if(tokens->size > 2 && strcmp(tokens->items[2], "|") != 0 && 
 					strcmp(tokens->items[2], "<") != 0 && strcmp(tokens->items[2], ">") != 0)
 					{
 						error = true;
 						printf("ERROR: too many arguments\n");
 					}
-					if (WHAT TO PUT HERE)
+					else if(tokens->items[1] == NULL || strlen(tokens->items[1]) < 0)
 					{
-						chdir(currentDir);
+						chdir(getenv("HOME"));
 					}
-					else
+					else if(chdir(tokens->items[1]) != 0)
 					{
+						if(access(tokens->items[1], F_OK) != 0)
+    						printf("ERROR: directory does not exist\n");
+						else
+							printf("ERROR: not a directory\n");
 						error = true;
-						printf("ERROR: directory does not exist\n");
+						printf("Token at index 1 (directory path): %s\n", tokens->items[1]);
 					}
-
-					
 				}
 				else if(strcmp(tokens->items[0], "jobs") == 0)
 				{
-
+					//WRITE OUR OWN STRUCTURE OR CLASS?
 				}
 				else if(access(tokens->items[0], F_OK) == 0 && access(tokens->items[0], X_OK) == 0)
 				{
@@ -304,6 +305,9 @@ int main()
 
 		free(input);
 		free_tokens(tokens);
+
+		//FREE HERE
+		free(pwd);
 	}
 
 	return 0;
