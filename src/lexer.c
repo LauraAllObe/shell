@@ -6,6 +6,20 @@
 #include <stdlib.h>
 #include <string.h>
 
+//global pipe file descriptors (part7)
+int pipe1[2];
+int pipe2[2];
+
+//function to execute a command (part 7)
+void execute_command(char *cmd, char **args)
+{
+	if(execvp(cmd, args) == -1)
+	{
+		perror("execvp");
+		exit(EXIT_FAILURE);
+	}
+}
+
 int main()
 {
 	while (1) {
@@ -158,6 +172,109 @@ int main()
 			}
 			
 		}
+		//PART 7 PIPING
+		//checking how many pipes are present
+		int pipeCount = 0;
+		for(int i = 0; i < tokens->size; i++)
+		{
+			if(strcmp(tokens->items[i], "|") == 0)
+			{
+				pipeCount++;
+			}
+		}
+		//Handling execution commands based on number of pipes in command line
+		switch (pipeCount)
+		{
+		case 1: //case one for guideline cmd1 | cmd2 (cmd1 redirects its standard output to the standard input of cmd2)
+			pipe(pipe1);
+			if(fork() == 0) //creates child process using fork, 1st child for command 1
+			{
+				dup2(pipe1[1], STDOUT_FILENO);/*whatever the child process write to its standard output will be writen into pipe1 */
+				//close the read-end and also the write-end of pipe1 in the child process
+				close(pipe1[0]);
+				close(pipe1[1]);
+				execvp(tokens->items[0], &tokens->items[0]); //replaces the current child process image with the new process image
+				perror("execvp");
+				exit(EXIT_FAILURE);//if execvp fails, this ensures the child process terminates with a failure status
+			}
+
+			if(fork() == 0)  //creates a new child process, 2nd child for command 2
+			{
+				//using dup2 to redirect STDIN(anything the child process reads from its standard input will now be read from pipe1)
+				dup2(pipe1[0], STDIN_FILENO);  
+				close(pipe1[0]);
+				close(pipe1[1]);  //closes the write-end of pipe1
+				execvp(tokens->items[2], &tokens->items[2]);
+				perror("execvp");
+				exit(EXIT_FAILURE);
+			}
+			//close both ends of pipe1 in the parent process
+			close(pipe1[0]); 
+			close(pipe1[1]);
+			//make parent process wait for both child processes to complete execution
+			wait(NULL);  
+			wait(NULL);
+			break;
+
+		case 2:  //case one for guideline cmd1 | cmd2 | cmd3
+			pipe(pipe1);
+			pipe(pipe2);
+			if(fork() == 0)  //create child process, 1st child for command 1
+			{
+				//Redirects the child's standard output to the write-end of pipe1
+				dup2(pipe1[1], STDOUT_FILENO);
+				//close both ends of pipe1 and pipe2
+				close(pipe1[0]);
+				close(pipe1[1]);
+				close(pipe2[0]);	
+				close(pipe2[1]);	
+				execvp(tokens->items[0], &tokens->items[0]);
+				perror("execvp");	
+				exit(EXIT_FAILURE);
+			}
+
+			if(fork() == 0)  //2nd child for command 2
+			{
+				dup2(pipe1[0], STDIN_FILENO); //redirect the child's standard input to the read-end of pipe1
+				dup2(pipe2[1], STDOUT_FILENO); //redirects the child's standard output to the write-end of pipe2
+				//close both ends of pipe1 and pipe2
+				close(pipe1[0]);
+				close(pipe1[1]);
+				close(pipe2[0]); 
+				close(pipe2[1]); 
+				execvp(tokens->items[2], &tokens->items[2]);
+				perror("execvp");
+				exit(EXIT_FAILURE);
+			}
+
+			if(fork() == 0)  //3rd child for command 3
+			{
+				dup2(pipe2[0], STDIN_FILENO); //redirects the child's standard input to the read-end of pipe2
+				//close both ends of pipe1 and pipe2
+				close(pipe1[0]);
+				close(pipe1[1]);
+				close(pipe2[0]);
+				close(pipe2[1]);
+				execvp(tokens->items[4], &tokens->items[4]);
+				perror("execvp");
+				exit(EXIT_FAILURE);
+			}
+			//in parent process, close both ends of pipe1 and pipe2
+			close(pipe1[0]);
+			close(pipe1[1]);
+			close(pipe2[0]);
+			close(pipe2[1]);
+			//make parent process wait for all three child processes to finish execution
+			wait(NULL);
+			wait(NULL);
+			wait(NULL);
+			break;
+
+		default:
+			fprintf(stderr, "Unsupported number of pipes: %d\n", pipeCount);
+			break;
+		} //end of part 7 
+
 		if(error)
 		{
 			//DISPLAY ANY ERROR MESSAGE HERE THAT HAPPENS BEFORE COMMAND EXECUTION
