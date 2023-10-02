@@ -1,3 +1,4 @@
+[![Review Assignment Due Date](https://classroom.github.com/assets/deadline-readme-button-24ddc0f5d75046c5622901739e7c5dd533143b0c8e959d652212380cedb1ea36.svg)](https://classroom.github.com/a/wtw9xmrw)
 # Shell
 
 [Description]
@@ -41,7 +42,7 @@ on piping, I/O redirection, and background processing.
 
 ### Part 6: I/O Redirection
 - **Responsibilities**: [Description]
-- **Assigned to**: 
+- **Assigned to**: Autumn Harp
 
 ### Part 7: Piping
 - **Responsibilities**: [Description]
@@ -56,8 +57,8 @@ on piping, I/O redirection, and background processing.
 - **Assigned to**: 
 
 ### Part 10: External Timeout Executable
-- **Responsibilities**: [Description]
-- **Assigned to**: 
+- **Responsibilities**: Implement the external executable/command "mytimeout" that can be executed in our shell. This command is analogous to the Unix command "timeout" and offers enhanced control over command execution duration. 
+- **Assigned to**: Jeyma Rodriguez
 
 ### Extra Credit
 - **Responsibilities**: [Description]
