@@ -149,12 +149,34 @@ int main()
 			char* token = strtok(path, ":");
 			//bool isExecutable = false;
 			//check if the token is executable (it is already a path)
-			bool wantToExpand = true;
+			/*bool wantToExpand = true;
 			if(strcmp(tokens->items[i], "cd") == 0 || strcmp(tokens->items[i], "exit") == 0
 			|| strcmp(tokens->items[i], "jobs") == 0 || (i != 0 
 			&& strcmp(tokens->items[i-1],"|") != 0 && strcmp(tokens->items[i-1],"<") != 0
 			&& strcmp(tokens->items[i-1],">") != 0))
 				wantToExpand = false;//to prevent unwanted variables from being expanded
+			if(tokens->items[i+1] != NULL && strcmp(tokens->items[i+1], "<") == 0)
+				wantToExpand = false;
+			if(i > 0 && strcmp(tokens->items[i-1], ">") == 0)
+				wantToExpand = false;*/
+
+			bool wantToExpand = true;//PREVENT EXPANSION OF FILE NAMES (I/O), INTERNAL COMMANDS, AND FLAGS
+			if(strcmp(tokens->items[i], "cd") == 0)
+				wantToExpand = false;
+			else if(strcmp(tokens->items[i], "exit") == 0)
+				wantToExpand = false;
+			else if(strcmp(tokens->items[i], "jobs") == 0)
+				wantToExpand = false;
+			else if(tokens->items[i+1] != NULL && strcmp(tokens->items[i+1], "<") == 0)
+				wantToExpand = false;
+			else if(i > 0 && strcmp(tokens->items[i-1], ">") == 0)
+				wantToExpand = false;
+			else if(tokens->items[i+1] != NULL && strcmp(tokens->items[i+1], ">") == 0)
+				wantToExpand = true;
+			else if(i > 0 && strcmp(tokens->items[i-1], "<") == 0)
+				wantToExpand = true;
+			else if(i != 0 && strcmp(tokens->items[i-1],"|") != 0)
+				wantToExpand = false;
 				
 			if((access(tokens->items[i], F_OK) != 0 || access(tokens->items[i], X_OK) != 0)
 			&& wantToExpand == true)
@@ -203,8 +225,17 @@ int main()
 		}
 		else
 		{
-			//BACKGROUND PROCESSING
-			if(tokens->size != 0 && tokens->items[tokens->size -1][0] == '&')
+			
+			int IOorPipe = false;//SO THAT #5, 8, & 9 DO NOT INTERFERE WITH 6 & 7
+			for(int i = 0; i < tokens->size; i++)
+			{
+				if(strcmp(tokens->items[i], "|") == 0 || strcmp(tokens->items[i], ">") == 0
+				|| strcmp(tokens->items[i], "<") == 0)
+					IOorPipe = true;
+			}
+
+			//BACKGROUND PROCESSING (TEMPORARILY EXCLUDES IO AND PIPE)
+			if(tokens->size != 0 && tokens->items[tokens->size -1][0] == '&' && IOorPipe == false)
 			{
 				int status;
 				pid_t pid = fork();
@@ -245,7 +276,7 @@ int main()
 					waitpid(pid, &status, WNOHANG);
 				}
 			}
-			else
+			else if(IOorPipe == false)//PART 9 (INTERNAL COMMAND EXECUTION)
 			{
 				if(strcmp(tokens->items[0], "exit") == 0)
 				{
@@ -303,7 +334,7 @@ int main()
 							printf("[%d]+ %d %s\n", jobList[i].jobNumber, jobList[i].pid, jobList[i].commandLine);
 					}
 				}
-				else if(access(tokens->items[0], F_OK) == 0 && access(tokens->items[0], X_OK) == 0)
+				else if(access(tokens->items[0], F_OK) == 0 && access(tokens->items[0], X_OK) == 0)//PART 5 (NO PIPE OR IO)
 				{
 					int status;
 					pid_t pid = fork();
