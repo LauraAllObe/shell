@@ -7,8 +7,21 @@
 #include <stdlib.h>
 #include <string.h>
 
+struct Job {
+    int jobNumber;
+    pid_t pid;
+    char commandLine[512];
+};
+
 int main()
 {
+	//FOR PT9 INTERNAL COMMAND EXECUTION JOBS
+	struct Job jobList[10];
+	for(int i = 0; i < 10; i++)
+		jobList[i].jobNumber = 0;
+	int jobCount = 0;
+	int jobsRunning = 0;
+
 	//FOR PT9 INTERNAL COMMAND EXECUTION EXIT
 	int commandHistory = 0;
 	int totalCommandHistory = 0;
@@ -17,6 +30,18 @@ int main()
 	char *cmd2 = (char *)malloc(sizeof(char *) * 200);
 	char *tempcmd = (char *)malloc(sizeof(char *) * 200);
 	while (1) {
+
+		for(int i = 0; i < 10; i++)
+		{
+			pid_t pid = waitpid(jobList[i].pid, NULL, WNOHANG);
+			if(pid > 0)
+			{
+				jobList[i].jobNumber = 0;
+				jobsRunning--;
+				printf("\n[Job %d] done\n", pid);
+				printf("\n");
+			}
+		}
 
 		size_t size = 0;
 		size = pathconf(".", _PC_PATH_MAX);
@@ -186,15 +211,37 @@ int main()
 				if(pid == 0) {
 					tokens->items[tokens->size -1] = NULL;
 					if (access(tokens->items[0], X_OK) == 0)
+					{
 						execv(tokens->items[0], tokens->items);
+					}
 					else
+					{
 						printf("ERROR: Command not found or not executable.\n");
-
-					printf("\n[Job %d] done\n", getpid());
-					printf("\n");
+						error = true;
+					}
 				}
 				else {
-					printf("[Job %d] [%d]\n", getpid(), getpid());
+					jobCount++;
+					jobsRunning++;
+					printf("[%d] [%d]\n", jobCount, getpid());
+					if(!error && (jobsRunning <= 10))
+					{
+						for(int i = 0; i < 10; i++)
+						{
+							if(jobList[i].jobNumber == 0)
+							{
+								jobList[i].jobNumber = jobCount;
+    							jobList[i].pid = getpid();
+								strncpy(jobList[i].commandLine, tempcmd, sizeof(jobList[i].commandLine));
+								break;
+							}
+						}
+					}
+					else if(jobsRunning > 10)
+					{
+						error = true;
+						printf("ERROR: maximum number of background jobs to be displayed reached\n");
+					}
 					waitpid(pid, &status, WNOHANG);
 				}
 			}
@@ -250,7 +297,11 @@ int main()
 				}
 				else if(strcmp(tokens->items[0], "jobs") == 0)
 				{
-					//WRITE OUR OWN STRUCTURE OR CLASS?
+					for (int i = 1; i <= 10; i++) 
+					{
+						if(jobList[i].jobNumber > 0)
+							printf("[%d]+ %d %s\n", jobList[i].jobNumber, jobList[i].pid, jobList[i].commandLine);
+					}
 				}
 				else if(access(tokens->items[0], F_OK) == 0 && access(tokens->items[0], X_OK) == 0)
 				{
