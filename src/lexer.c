@@ -12,7 +12,7 @@ struct Job {
     pid_t pid;
     char commandLine[512];
 };
-=======
+
 //global pipe file descriptors (part7)
 int pipe1[2];
 int pipe2[2];
