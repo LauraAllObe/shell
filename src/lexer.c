@@ -1,32 +1,23 @@
+#define _POSIX_C_SOURCE 200809L
+#include <string.h>
 #include <unistd.h>
 #include <sys/types.h>
 #include <sys/wait.h>
 #include "lexer.h"
 #include <stdio.h>
 #include <stdlib.h>
-#include <string.h>
-
-//global pipe file descriptors (part7)
-int pipe1[2];
-int pipe2[2];
-
-//function to execute a command (part 7)
-void execute_command(char *cmd, char **args)
-{
-	if(execvp(cmd, args) == -1)
-	{
-		perror("execvp");
-		exit(EXIT_FAILURE);
-	}
-}
 
 //function to return full path or null if not found(part 7)
 char* get_full_path(char *cmd)
 {
 	char *path = getenv("PATH");
+	if (!path) {
+    fprintf(stderr, "PATH environment variable not set.\n");
+    return NULL;
+}
 	char *pathCpy = strdup(path);
 	char *dir = strtok(pathCpy, ":");
-
+	//Iterates through each directory in the PATH and checks if the command exists in that directory
 	while(dir != NULL)
 	{
 		char executable[512];
@@ -40,6 +31,35 @@ char* get_full_path(char *cmd)
 	}
 	free(pathCpy);
 	return NULL; //command not found, return null
+}
+
+//function to execute command in a child process with path(part 7)
+void execute_cmd_with_path(char *cmd, int writePipe[2], int readPipe[2]) {
+    if (fork() == 0) { //creates child process using fork
+        if (writePipe) //If there's a write pipe, it duplicates its write end to standard output
+		{
+            dup2(writePipe[1], STDOUT_FILENO);
+            close(writePipe[0]);
+            close(writePipe[1]);
+        }
+
+        if (readPipe)  //If there's a read pipe, it duplicates its read end to standard input
+		{
+            dup2(readPipe[0], STDIN_FILENO);
+            close(readPipe[0]);
+            close(readPipe[1]);
+        }
+		//Executes the command using get_full_path
+        char *fullPath = get_full_path(cmd);
+        if (fullPath) {
+            char *cmd_args[] = { cmd, NULL };
+            execv(fullPath, cmd_args);
+            free(fullPath);
+        } else {
+            perror("Command not found/not executable");
+            exit(EXIT_FAILURE);
+        }
+    }
 }
 
 int main()
@@ -80,7 +100,7 @@ int main()
 			if(tokens->items[i][0]=='$')
 			{				
 				char variable[50];
-				printf(tokens->items[i]);
+				printf("%s", tokens->items[i]);
 				strncpy(variable, tokens->items[i] + 1, strlen(tokens->items[i]));
 				variable[strlen(variable)] = '\0';
 
@@ -112,33 +132,29 @@ int main()
 
 			//TILDE EXPANSION
 			//Checking if the token starts with a tilde
-			if(tokens->items[i][1] == '~')
+			if(tokens->items[i][0] == '~' && (tokens->items[i][1] == '\0' || tokens->items[i][1] == '/'))
 			{
-				//If tilde stands alone or tilde is followed by a '/'
-				if(tokens->items[i][1] == '\0' || tokens->items[i][1] == '/')
+				//Get HOME evironment variable
+				char *home = getenv("HOME");
+
+				if(home)  //If $HOME is set
 				{
-					//Get HOME evironment variable
-					char *home = getenv("HOME");
+					//Assign space for the expanded path
+					//using malloc() to allocate the requested memory and return pointer to it
+					char *expandedPath = (char *)malloc(strlen(home) + strlen(tokens->items[i]) + 1);
+					//creating expanded path
+					strcpy(expandedPath, home);
+					strcat(expandedPath, tokens->items[i] + 1);
 
-					if(home)  //If $HOME is set
-					{
-						//Assign space for the expanded path
-						//using malloc() to allocate the requested memory and return pointer to it
-						char *expandedPath = (char *)malloc(strlen(home) + strlen(tokens->items[i]) + 1);
-						//creating expanded path
-						strcpy(expandedPath, home);
-						strcat(expandedPath, tokens->items[i] + 1);
-
-						//using free() to deallocates tokens previous memory
-						free(tokens->items[i]);
-						//Updating tokens with expanded path
-						tokens->items[i] = expandedPath;
-					}
-					else  //Show error message if $HOME is not set
-					{
-						errorMessage = "ERROR: Tilde expansion failed; HOME environment variable is not set.\n";
-						error = true;
-					}
+					//using free() to deallocates tokens previous memory
+					free(tokens->items[i]);
+					//Updating tokens with expanded path
+					tokens->items[i] = expandedPath;
+				}
+				else  //Show error message if $HOME is not set
+				{
+					errorMessage = "ERROR: Tilde expansion failed; HOME environment variable is not set.\n";
+					error = true;
 				}
 			}
 
@@ -195,9 +211,11 @@ int main()
 			
 		}
 		//PART 7 PIPING
+		int pipe1[2];
+		int pipe2[2];
 		//checking how many pipes are present
 		int pipeCount = 0;
-		int index1, index2 = 0, 0;
+		int index1 = 0, index2 = 0;
 		for(int i = 0; i < tokens->size; i++)
 		{
 			if(strcmp(tokens->items[i], "|") == 0)
@@ -213,114 +231,30 @@ int main()
 		switch (pipeCount)
 		{
 		case 1: //case one for guideline cmd1 | cmd2 (cmd1 redirects its standard output to the standard input of cmd2)
-			pipe(pipe1);
-			if(fork() == 0) //creates child process using fork, 1st child for command 1
+			if (pipe(pipe1) == -1) 
 			{
-				dup2(pipe1[1], STDOUT_FILENO);/*whatever the child process write to its standard output will be writen into pipe1 */
-				//close the read-end and also the write-end of pipe1 in the child process
-				close(pipe1[0]);
-				close(pipe1[1]);
-				char *fullPath = get_full_path(tokens->items[0]);
-				if(fullPath)
-				{
-					execv(fullPath, &tokens->items[0]);
-					free(fullPath);
-				} else
-				{
-					perror("Command not found/not executable");
-					exit(EXIT_FAILURE);//if execv fails, the child process terminates with a failure status
-				}
-			}
-
-			if(fork() == 0)  //creates a new child process, 2nd child for command 2
-			{
-				//using dup2 to redirect STDIN(anything the child process reads from its standard input will now be read from pipe1)
-				dup2(pipe1[0], STDIN_FILENO);  
-				close(pipe1[0]);
-				close(pipe1[1]);  //closes the write-end of pipe1
-				char *fullPath = get_full_path(tokens->items[index1 + 1]);
-				if(fullPath)
-				{
-					execv(fullPath, &tokens->items[0]);
-					free(fullPath);
-				} else
-				{
-					perror("Command not found/not executable");
-					exit(EXIT_FAILURE);//if execv fails, the child process terminates with a failure status
-				}
-			}
-			//close both ends of pipe1 in the parent process
-			close(pipe1[0]); 
+            	perror("pipe1 failed");
+            	exit(EXIT_FAILURE);
+        	}
+			//Uses the execute_cmd_with_path function to execute the two commands with appropriate read and write pipes
+			execute_cmd_with_path(tokens->items[0], pipe1, NULL);
+        	execute_cmd_with_path(tokens->items[index1 + 1], NULL, pipe1);
+			close(pipe1[0]);
 			close(pipe1[1]);
-			//make parent process wait for both child processes to complete execution
+			//wait for child processes to finish execution
 			wait(NULL);  
-			wait(NULL);
+        	wait(NULL);	
 			break;
 
 		case 2:  //case one for guideline cmd1 | cmd2 | cmd3
-			pipe(pipe1);
-			pipe(pipe2);
-			if(fork() == 0)  //create child process, 1st child for command 1
+			if (pipe(pipe1) == -1 || pipe(pipe2) == -1)
 			{
-				//Redirects the child's standard output to the write-end of pipe1
-				dup2(pipe1[1], STDOUT_FILENO);
-				//close both ends of pipe1 and pipe2
-				close(pipe1[0]);
-				close(pipe1[1]);
-				close(pipe2[0]);	
-				close(pipe2[1]);	
-				char *fullPath = get_full_path(tokens->items[0]);
-				if(fullPath)
-				{
-					execv(fullPath, &tokens->items[0]);
-					free(fullPath);
-				} else
-				{
-					perror("Command not found/not executable");
-					exit(EXIT_FAILURE);//if execv fails, the child process terminates with a failure status
-				}
-			}
-
-			if(fork() == 0)  //2nd child for command 2
-			{
-				dup2(pipe1[0], STDIN_FILENO); //redirect the child's standard input to the read-end of pipe1
-				dup2(pipe2[1], STDOUT_FILENO); //redirects the child's standard output to the write-end of pipe2
-				//close both ends of pipe1 and pipe2
-				close(pipe1[0]);
-				close(pipe1[1]);
-				close(pipe2[0]); 
-				close(pipe2[1]); 
-				char *fullPath = get_full_path(tokens->items[index1 + 1]);
-				if(fullPath)
-				{
-					execv(fullPath, &tokens->items[0]);
-					free(fullPath);
-				} else
-				{
-					perror("Command not found/not executable");
-					exit(EXIT_FAILURE);//if execv fails, the child process terminates with a failure status
-				}
-			}
-
-			if(fork() == 0)  //3rd child for command 3
-			{
-				dup2(pipe2[0], STDIN_FILENO); //redirects the child's standard input to the read-end of pipe2
-				//close both ends of pipe1 and pipe2
-				close(pipe1[0]);
-				close(pipe1[1]);
-				close(pipe2[0]);
-				close(pipe2[1]);
-				char *fullPath = get_full_path(tokens->items[index2 + 1]);
-				if(fullPath)
-				{
-					execv(fullPath, &tokens->items[0]);
-					free(fullPath);
-				} else
-				{
-					perror("Command not found/not executable");
-					exit(EXIT_FAILURE);//if execv fails, the child process terminates with a failure status
-				}
-			}
+            	perror("pipe failed");
+            	exit(EXIT_FAILURE);
+        	}
+			execute_cmd_with_path(tokens->items[0], pipe1, NULL);
+			execute_cmd_with_path(tokens->items[index1 + 1], pipe2, pipe1);
+			execute_cmd_with_path(tokens->items[index2 + 1], NULL, pipe2);
 			//in parent process, close both ends of pipe1 and pipe2
 			close(pipe1[0]);
 			close(pipe1[1]);
@@ -331,7 +265,6 @@ int main()
 			wait(NULL);
 			wait(NULL);
 			break;
-
 		default:
 			fprintf(stderr, "Unsupported number of pipes: %d\n", pipeCount);
 			break;
