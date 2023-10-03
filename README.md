@@ -46,7 +46,7 @@ on piping, I/O redirection, and background processing.
 
 ### Part 7: Piping
 - **Responsibilities**: [Description]
-- **Assigned to**: 
+- **Assigned to**: Jeyma Rodriguez
 
 ### Part 8: Background Processing
 - **Responsibilities**: [Description]
