@@ -13,7 +13,31 @@ struct Job {
     pid_t pid;
     char commandLine[512];
 };
+//function to return full path or null if not found(part 7)
+char* get_full_path(char *cmd)
+{
+	char *path = getenv("PATH");
+	if (!path) {
+    fprintf(stderr, "PATH environment variable not set.\n");
+    return NULL;
+}
+	char *pathCpy = strdup(path);
+	char *dir = strtok(pathCpy, ":");
 
+	while(dir != NULL)
+	{
+		char executable[512];
+		snprintf(executable, sizeof(executable), "%s/%s", dir, cmd);
+		if(access(executable, F_OK) == 0 && access(executable, X_OK) ==0)
+		{
+			free(pathCpy);
+			return strdup(executable);  //return executable path
+		}
+		dir = strtok(NULL, ":");
+	}
+	free(pathCpy);
+	return NULL; //command not found, return null
+}
 /*
 //function to execute command in a child process with path(part 7)
 void execute_cmd_with_path(char *cmd, int writePipe[2], int readPipe[2]) {
