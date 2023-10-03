@@ -36,7 +36,7 @@ int main()
 		}
 
 		//PT6
-		if((strcmp(tokens->items[0], "cmd")==0)||(strcmp(tokens->items[0], "CMD")==0))
+	if((strcmp(tokens->items[0], "cmd")==0)||(strcmp(tokens->items[0], "CMD")==0))
 		{
 			//FILE OUT
 			if(strcmp(tokens->items[1], ">")==0)
@@ -56,7 +56,7 @@ int main()
 						}
 					}
 				}
-				int rediro = open(tokens->items[2], O_CREAT | O_RDWR | O_TRUNC); //important note: logical or (||) will cause the program to panic. Use (|) for flag seperation.
+				int rediro = open(tokens->items[2], O_CREAT | O_RDWR | O_TRUNC, S_IRUSR | S_IWUSR); //important note: logical or (||) will cause the program to panic. Use (|) for flag seperation.
 				dup2(rediro, STDOUT_FILENO);
 				close(rediro);
 			} //FILE IN
@@ -75,7 +75,7 @@ int main()
 				{		//MULTISTEP
 					if(strcmp(tokens->items[3], ">")==0)
 					{
-						int rediro = open(tokens->items[4], O_CREAT | O_RDWR | O_TRUNC);
+						int rediro = open(tokens->items[4], O_CREAT | O_RDWR | O_TRUNC, S_IRUSR | S_IWUSR);
 						dup2(rediro, STDOUT_FILENO);
 						close(rediro);
 					}
