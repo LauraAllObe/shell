@@ -4,11 +4,9 @@
 #include <sys/types.h>
 #include <sys/wait.h>
 #include <sys/stat.h>
-#include <sys/stat.h>
 #include "lexer.h"
 #include <stdio.h>
 #include <stdlib.h>
-#include <string.h>
 
 struct Job {
     int jobNumber;
@@ -16,6 +14,7 @@ struct Job {
     char commandLine[512];
 };
 
+/*
 //function to execute command in a child process with path(part 7)
 void execute_cmd_with_path(char *cmd, int writePipe[2], int readPipe[2]) {
     if (fork() == 0) { //creates child process using fork
@@ -43,10 +42,11 @@ void execute_cmd_with_path(char *cmd, int writePipe[2], int readPipe[2]) {
             exit(EXIT_FAILURE);
         }
     }
-}
+}*/
 
 int main()
 {
+	bool error0 = false;
 	//FOR PT9 INTERNAL COMMAND EXECUTION JOBS
 	struct Job jobList[10];
 	for(int i = 0; i < 10; i++)
@@ -61,7 +61,6 @@ int main()
 	char *cmd1 = (char *)malloc(sizeof(char *) * 200);
 	char *cmd2 = (char *)malloc(sizeof(char *) * 200);
 	char *tempcmd = (char *)malloc(sizeof(char *) * 200);
-	
 	while (1) {
 		for(int i = 0; i < 10; i++)
 		{
@@ -222,14 +221,14 @@ int main()
 					if(access(executable, F_OK) == 0 && access(executable, X_OK) == 0)
 					{
 						tokens->items[i] = (char *)realloc(tokens->items[i], strlen(executable) + 1);
-                                        	strcpy(tokens->items[i], executable);
-                                        	strcpy(tokens->items[i], executable);
-                                        	//printf("~~New token:%s\n",tokens->items[i]);
+                        strcpy(tokens->items[i], executable);
+                        strcpy(tokens->items[i], executable);
+                        //printf("~~New token:%s\n",tokens->items[i]);
 						strcpy(tokens->items[i], executable);
-                                        	//printf("~~New token:%s\n",tokens->items[i]);
+                        //printf("~~New token:%s\n",tokens->items[i]);
 						//isExecutable = true;
 						break;	
-				}
+					}
 					token = strtok(NULL, ":");
 				}
 				//if it is executable, copy final executable into token item
@@ -247,7 +246,7 @@ int main()
 			}
 		}
 
-
+		/*
 		//PART 7 PIPING
 		int pipe1[2];
 		int pipe2[2];
@@ -306,7 +305,7 @@ int main()
 		default:
 			fprintf(stderr, "Unsupported number of pipes: %d\n", pipeCount);
 			break;
-		} //end of part 7 
+		} //end of part 7 */
 
 		if(error)
 		{
@@ -474,174 +473,40 @@ int main()
 				totalCommandHistory++;
 			}
 		}
-			
-			int IOorPipe = false;//SO THAT #5, 8, & 9 DO NOT INTERFERE WITH 6 & 7
-			for(int i = 0; i < tokens->size; i++)
-			{
-				if(strcmp(tokens->items[i], "|") == 0 || strcmp(tokens->items[i], ">") == 0
-				|| strcmp(tokens->items[i], "<") == 0)
-					IOorPipe = true;
-			}
-
-			//BACKGROUND PROCESSING (TEMPORARILY EXCLUDES IO AND PIPE)
-			if(tokens->size != 0 && tokens->items[tokens->size -1][0] == '&' && IOorPipe == false)
-			{
-				int status;
-				pid_t pid = fork();
-				if(pid == 0) {
-					tokens->items[tokens->size -1] = NULL;
-					if (access(tokens->items[0], X_OK) == 0)
-					{
-						execv(tokens->items[0], tokens->items);
-					}
-					else
-					{
-						printf("ERROR: Command not found or not executable.\n");
-						error = true;
-					}
-				}
-				else {
-					jobCount++;
-					jobsRunning++;
-					printf("[%d] [%d]\n", jobCount, getpid());
-					if(!error && (jobsRunning <= 10))
-					{
-						for(int i = 0; i < 10; i++)
-						{
-							if(jobList[i].jobNumber == 0)
-							{
-								jobList[i].jobNumber = jobCount;
-    							jobList[i].pid = getpid();
-								strncpy(jobList[i].commandLine, tempcmd, sizeof(jobList[i].commandLine));
-								break;
-							}
-						}
-					}
-					else if(jobsRunning > 10)
-					{
-						error = true;
-						printf("ERROR: maximum number of background jobs to be displayed reached\n");
-					}
-					waitpid(pid, &status, WNOHANG);
-				}
-			}
-			else if(IOorPipe == false)//PART 9 (INTERNAL COMMAND EXECUTION)
-			{
-				if(strcmp(tokens->items[0], "exit") == 0)
-				{
-					//waitpid(pid, &status, WNOHANG);
-					if(totalCommandHistory == 3)
-					{
-						printf("Last (%d) valid commands:\n", totalCommandHistory);
-						printf("[1]: %s\n", cmd0);
-						printf("[2]: %s\n", cmd1);
-						printf("[3]: %s\n", cmd2);
-					}
-					else if(totalCommandHistory > 0)
-					{
-						printf("Last valid command:\n");
-						if(totalCommandHistory%3 == 1)
-							printf("[1]: %s\n", cmd0);
-						else if(totalCommandHistory%3 == 2)
-							printf("[1]: %s\n", cmd1);
-						else if(totalCommandHistory%3 == 3)
-							printf("[1]: %s\n", cmd2);
-					}
-					else
-					{
-						printf("No valid commands in history.\n");
-					}
-					exit(0);
-				}
-				else if(strcmp(tokens->items[0], "cd") == 0)
-				{
-					if(tokens->size > 2 && strcmp(tokens->items[2], "|") != 0 && 
-					strcmp(tokens->items[2], "<") != 0 && strcmp(tokens->items[2], ">") != 0)
-					{
-						error = true;
-						printf("ERROR: too many arguments\n");
-					}
-					else if(tokens->items[1] == NULL || strlen(tokens->items[1]) < 0)
-					{
-						chdir(getenv("HOME"));
-					}
-					else if(chdir(tokens->items[1]) != 0)
-					{
-						if(access(tokens->items[1], F_OK) != 0)
-    						printf("ERROR: directory does not exist\n");
-						else
-							printf("ERROR: not a directory\n");
-						error = true;
-						printf("Token at index 1 (directory path): %s\n", tokens->items[1]);
-					}
-				}
-				else if(strcmp(tokens->items[0], "jobs") == 0)
-				{
-					for (int i = 1; i <= 10; i++) 
-					{
-						if(jobList[i].jobNumber > 0)
-							printf("[%d]+ %d %s\n", jobList[i].jobNumber, jobList[i].pid, jobList[i].commandLine);
-					}
-				}
-				else if(access(tokens->items[0], F_OK) == 0 && access(tokens->items[0], X_OK) == 0)//PART 5 (NO PIPE OR IO)
-				{
-					int status;
-					pid_t pid = fork();
-					if (pid == 0)
-					{
-						execv(tokens->items[0], tokens->items);
-					}
-					else {
-						waitpid(pid, &status, 0);
-						//exit(0);
-					}
-				}
-				else
-				{
-					error = true;
-					printf("ERROR: Command not found or not executable.\n");
-				}
-				
-			}
-		}
-
-		//COPY COMMAND FOR PT9 INTERNAL COMMAND EXECUTION: EXIT
-		if(!error)//MAKE SURE TO SET ERROR TO 0 IF COMMAND NOT WORK
-		{
-			if(commandHistory == 0)
-			{
-				free(cmd0);
-				cmd0 = (char *)calloc(200, sizeof(char));
-				strncat(cmd0, tempcmd, strlen(tempcmd));
-				commandHistory++;
-				totalCommandHistory++;
-			}
-			else if(commandHistory == 1)
-			{
-				free(cmd1);
-				cmd1 = (char *)calloc(200, sizeof(char));
-				strncat(cmd1, tempcmd, strlen(tempcmd));
-				commandHistory++;
-				totalCommandHistory++;
-			}
-			else if(commandHistory == 2)
-			{
-				free(cmd2);
-				cmd2 = (char *)calloc(200, sizeof(char));
-				strncat(cmd2, tempcmd, strlen(tempcmd));
-				commandHistory = 0;
-				totalCommandHistory++;
-			}
-		}
-
+		error0 = error;
 		free(input);
 		free_tokens(tokens);
-
 		//FREE HERE
 		free(pwd);
+	}
 
-		//FREE HERE
-		free(pwd);
+	//COPY COMMAND FOR PT9 INTERNAL COMMAND EXECUTION: EXIT
+	if(!error0)//MAKE SURE TO SET ERROR TO 0 IF COMMAND NOT WORK
+	{
+		if(commandHistory == 0)
+		{
+			free(cmd0);
+			cmd0 = (char *)calloc(200, sizeof(char));
+			strncat(cmd0, tempcmd, strlen(tempcmd));
+			commandHistory++;
+			totalCommandHistory++;
+		}
+		else if(commandHistory == 1)
+		{
+			free(cmd1);
+			cmd1 = (char *)calloc(200, sizeof(char));
+			strncat(cmd1, tempcmd, strlen(tempcmd));
+			commandHistory++;
+			totalCommandHistory++;
+		}
+		else if(commandHistory == 2)
+		{
+			free(cmd2);
+			cmd2 = (char *)calloc(200, sizeof(char));
+			strncat(cmd2, tempcmd, strlen(tempcmd));
+			commandHistory = 0;
+			totalCommandHistory++;
+		}
 	}
 
 	return 0;
