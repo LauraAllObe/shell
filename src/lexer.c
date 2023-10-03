@@ -8,6 +8,16 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+/*
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~OFFICE HOUR QUESTIONS (TO KEEP TRACK):~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+WHEN CD, DOES DIRECTORY GO IN PROMPT (ABSOLUTE WORKING DIRECTORY -> CURRENT WORKING DIRECTORY)?
+CAN OUR PROJECT STRUCTURE FEATURE A .GITIGNORE FILE?
+CAN WE HAVE LEXER.C AND LEXER.H INSTEAD OF SHELL.H, SHELL.C, AND MAIN.C?
+CHECK PROJECT STRUCTURE WITH TA
+
+
+*/
+//JOB STRUCTURE FOR jOBS INTERNAL COMMAND EXECUTION (PART 9)
 struct Job {
     int jobNumber;
     pid_t pid;
@@ -72,23 +82,23 @@ void execute_cmd_with_path(char *cmd, int writePipe[2], int readPipe[2]) {
 
 int main()
 {
-	bool error0 = false;
-	//FOR PT9 INTERNAL COMMAND EXECUTION JOBS
+	//FOR PART 9 INTERNAL COMMAND EXECUTION JOBS, INITIALIZE JOB LIST JOB # TO 0
 	struct Job jobList[10];
 	for(int i = 0; i < 10; i++)
 		jobList[i].jobNumber = 0;
 	int jobCount = 0;
 	int jobsRunning = 0;
 
-	//FOR PT9 INTERNAL COMMAND EXECUTION EXIT
-	int commandHistory = 0;
+	//FOR PART 9 INTERNAL COMMAND EXECUTION EXIT, INITIALIZE PLACEHOLDERS AND 
+	int commandHistory = 0;//COUNTERS FOR THE THREE MOST RECENT COMMANDS
 	int totalCommandHistory = 0;
 	char *cmd0 = (char *)malloc(sizeof(char *) * 200);
 	char *cmd1 = (char *)malloc(sizeof(char *) * 200);
 	char *cmd2 = (char *)malloc(sizeof(char *) * 200);
 	char *tempcmd = (char *)malloc(sizeof(char *) * 200);
 	while (1) {
-		for(int i = 0; i < 10; i++)
+		//DECREMENT BACKGROUND PROCCESSES WHEN COMPLETED FOR BACKGROUND PROCESSING (PART 8) AND
+		for(int i = 0; i < 10; i++)//JOBS INTERNAL COMMAND EXECUTION (PART 9)
 		{
 			pid_t pid = waitpid(jobList[i].pid, NULL, WNOHANG);
 			if(pid > 0)
@@ -102,14 +112,14 @@ int main()
 
 		size_t size = 0;
 		size = pathconf(".", _PC_PATH_MAX);
-		//ENVIRONMENTAL VARIABLES FOR PROMPT (PT1)
+		//ENVIRONMENTAL VARIABLES FOR PROMPT (PART 1)
 		const char *user = getenv("USER");
 		const char *machine = getenv("MACHINE");
 		char *pwd = NULL;		
 		if ((pwd = (char *)malloc((size_t)size)) != NULL) 
         	getcwd(pwd, (size_t)size);
 
-		//VARIABLES TO BE USED FOR ALL ERROR MESSAGES
+		//VARIABLES TO BE USED FOR MOST ERROR MESSAGES
 		char *errorMessage;
 		bool error = false;
 
@@ -128,7 +138,8 @@ int main()
 		for (int i = 0; i < tokens->size; i++) {
 		}
 
-		//FOR PT9 EXIT (INTERNAL COMMANDS)
+		//FOR EXIT INTERNAL COMMAND EXECUTION (PART 9)
+		//STORE THE COMMAND (WITHOUT PATH EXPANSION, ETC) FOR LATER USE
 		free(tempcmd);
 		tempcmd = (char *)calloc(200, sizeof(char));
 		for(int i = 0; i < tokens->size; i++)
@@ -137,9 +148,18 @@ int main()
 			strncat(tempcmd, " ", strlen(" "));
 		}
 
-		//ITERATE THROUGH TOKENS FOR ENVIRONMENT VARIABLE EXPANSION (PT2)
+		//ITERATE THROUGH TOKENS FOR ENVIRONMENT VARIABLE EXPANSION (PART 2)
 		for (int i = 0; i < tokens->size; i++)
 		{
+			//EXTRA CREDIT #3 (EXECUTE SHELL WITHIN SHELL), THIS EXPANDS BIN/SHELL AND
+			if(strcmp(tokens->items[i], "./bin/shell") == 0 //./BIN/SHELL TO FULL PATH
+			|| strcmp(tokens->items[i], "bin/shell") == 0 )
+			{
+				tokens->items[0] = (char *)realloc(tokens->items[0], strlen(pwd) + 1);
+				strncpy(tokens->items[0], pwd, strlen(pwd));
+				strcat(tokens->items[0], "/bin/shell");
+			}
+
 			//IF CURRENT TOKEN IS AN ENVIRONMENTAL VARIABLE
 			if(tokens->items[i][0]=='$')
 			{				
@@ -164,9 +184,10 @@ int main()
 				}
 			}
 
-			//TILDE EXPANSION
+			//TILDE EXPANSION (PART 3)
 			//Checking if the token starts with a tilde
-			if(tokens->items[i][0] == '~' && (tokens->items[i][1] == '\0' || tokens->items[i][1] == '/'))
+			if(tokens->items[i][0] == '~' && (tokens->items[i][1] == '\0' 
+			|| tokens->items[i][1] == '/'))
 			{
 				//Get HOME evironment variable
 				char *home = getenv("HOME");
@@ -175,7 +196,8 @@ int main()
 				{
 					//Assign space for the expanded path
 					//using malloc() to allocate the requested memory and return pointer to it
-					char *expandedPath = (char *)malloc(strlen(home) + strlen(tokens->items[i]) + 1);
+					char *expandedPath = (char *)malloc(strlen(home) 
+					+ strlen(tokens->items[i]) + 1);
 					//creating expanded path
 					strcpy(expandedPath, home);
 					strcat(expandedPath, tokens->items[i] + 1);
@@ -187,13 +209,14 @@ int main()
 				}
 				else  //Show error message if $HOME is not set
 				{
-					errorMessage = "ERROR: Tilde expansion failed; HOME environment variable is not set.\n";
+					errorMessage = 
+					"ERROR: Tilde expansion failed HOME environment variable is not set.\n";
 					error = true;
 				}
 			}
 
-			//PATH SEARCH (PT4)
-			//get the whole $PATH variable
+			//PATH SEARCH (PART 4)
+			//GET THE WHOLE $PATH VARIABLE
 			char * ptrPath = getenv("PATH");
 			char path[256];
 			strcpy(path, ptrPath);
@@ -202,19 +225,9 @@ int main()
 			//delimit path variable by : (seperate directories)
 			char* token = strtok(path, ":");
 			//bool isExecutable = false;
-			//check if the token is executable (it is already a path)
-			/*bool wantToExpand = true;
-			if(strcmp(tokens->items[i], "cd") == 0 || strcmp(tokens->items[i], "exit") == 0
-			|| strcmp(tokens->items[i], "jobs") == 0 || (i != 0 
-			&& strcmp(tokens->items[i-1],"|") != 0 && strcmp(tokens->items[i-1],"<") != 0
-			&& strcmp(tokens->items[i-1],">") != 0))
-				wantToExpand = false;//to prevent unwanted variables from being expanded
-			if(tokens->items[i+1] != NULL && strcmp(tokens->items[i+1], "<") == 0)
-				wantToExpand = false;
-			if(i > 0 && strcmp(tokens->items[i-1], ">") == 0)
-				wantToExpand = false;*/
 
-			bool wantToExpand = true;//PREVENT EXPANSION OF FILE NAMES (I/O), INTERNAL COMMANDS, AND FLAGS
+			//PATH SEARCH (PART 4)
+			bool wantToExpand = true;//PREVENT EXPANSION OF INTERNAL COMMANDS AND NONCOMMANDS
 			if(strcmp(tokens->items[i], "cd") == 0)
 				wantToExpand = false;
 			else if(strcmp(tokens->items[i], "exit") == 0)
@@ -232,6 +245,8 @@ int main()
 			else if(i != 0 && strcmp(tokens->items[i-1],"|") != 0)
 				wantToExpand = false;
 				
+			//IF THE TOKEN IS NOT ALREADY AN EXECUTABLE PATH AND WE WANT TO EXPAND,
+			//THEN DO PATH SEARCH (PT4) AND EXPAND EACH COMMAND
 			if((access(tokens->items[i], F_OK) != 0 || access(tokens->items[i], X_OK) != 0)
 			&& wantToExpand == true)
 			{
@@ -246,7 +261,8 @@ int main()
 					//if it is executable, copy to finalExecutable
 					if(access(executable, F_OK) == 0 && access(executable, X_OK) == 0)
 					{
-						tokens->items[i] = (char *)realloc(tokens->items[i], strlen(executable) + 1);
+						tokens->items[i] = (char *)realloc(tokens->items[i], 
+						strlen(executable) + 1);
                         strcpy(tokens->items[i], executable);
                         strcpy(tokens->items[i], executable);
                         //printf("~~New token:%s\n",tokens->items[i]);
@@ -257,18 +273,6 @@ int main()
 					}
 					token = strtok(NULL, ":");
 				}
-				//if it is executable, copy final executable into token item
-				//if(isExecutable)
-				//{
-					//tokens->items[i] = (char *)realloc(tokens->items[i], strlen(finalExecutable) + 1);
-					//strcpy(tokens->items[i], finalExecutable);
-				//}
-				//else
-				//{
-				//	if()
-				//	errorMessage = "ERROR: Command not found or not executable.\n";
-				//	error = true;
-				//}
 			}
 		}
 
@@ -293,13 +297,15 @@ int main()
 		//Handling execution commands based on number of pipes in command line
 		switch (pipeCount)
 		{
-		case 1: //case one for guideline cmd1 | cmd2 (cmd1 redirects its standard output to the standard input of cmd2)
+		case 1: //case one for guideline cmd1 | cmd2 (cmd1 redirects its standard output to 
+		//the standard input of cmd2)
 			if (pipe(pipe1) == -1) 
 			{
             	perror("pipe1 failed");
             	exit(EXIT_FAILURE);
         	}
-			//Uses the execute_cmd_with_path function to execute the two commands with appropriate read and write pipes
+			//Uses the execute_cmd_with_path function to execute the two commands with appropriate
+			// read and write pipes
 			execute_cmd_with_path(tokens->items[0], pipe1, NULL);
         	execute_cmd_with_path(tokens->items[index1 + 1], NULL, pipe1);
 			close(pipe1[0]);
@@ -333,6 +339,7 @@ int main()
 			break;
 		} //end of part 7 */
 
+		//THIS IS WHERE PREVIOUSLY INITIALIZED ERROR MESSAGES WILL BE DISPLAYED
 		if(error)
 		{
 			//DISPLAY ANY ERROR MESSAGE HERE THAT HAPPENS BEFORE COMMAND EXECUTION
@@ -341,6 +348,8 @@ int main()
 		else
 		{
 			
+			//CHECKS TO MAKE SURE COMMAND DOES NOT HAVE ANY <, >, OR | TOKENS
+			//(SEPERATE CASES ELSEWHERE IN FILE FOR <, >, |)
 			int IOorPipe = false;//SO THAT #5, 8, & 9 DO NOT INTERFERE WITH 6 & 7
 			for(int i = 0; i < tokens->size; i++)
 			{
@@ -349,7 +358,7 @@ int main()
 					IOorPipe = true;
 			}
 
-			//BACKGROUND PROCESSING (TEMPORARILY EXCLUDES IO AND PIPE)
+			//(PART 9) BACKGROUND PROCESSING (EXCLUDING IO AND PIPE)
 			if(tokens->size != 0 && tokens->items[tokens->size -1][0] == '&' && IOorPipe == false)
 			{
 				int status;
@@ -366,8 +375,8 @@ int main()
 						error = true;
 					}
 				}
-				else {
-					jobCount++;
+				else {//INCREMENT COUNT AND ADD TO JOB STRUCTURE FOR JOBS INTERNAL COMMAND (PART 8)
+					jobCount++;//AND BACKGROUND EXECUTION (PART 9)
 					jobsRunning++;
 					printf("[%d] [%d]\n", jobCount, getpid());
 					if(!error && (jobsRunning <= 10))
@@ -378,7 +387,8 @@ int main()
 							{
 								jobList[i].jobNumber = jobCount;
     							jobList[i].pid = getpid();
-								strncpy(jobList[i].commandLine, tempcmd, sizeof(jobList[i].commandLine));
+								strncpy(jobList[i].commandLine, tempcmd, 
+								sizeof(jobList[i].commandLine));
 								break;
 							}
 						}
@@ -386,26 +396,25 @@ int main()
 					else if(jobsRunning > 10)
 					{
 						error = true;
-						printf("ERROR: maximum number of background jobs to be displayed reached\n");
+						printf("ERROR: maximum number of background jobs to display reached\n");
 					}
 					waitpid(pid, &status, WNOHANG);
 				}
 			}
-			else if(IOorPipe == false)//PART 9 (INTERNAL COMMAND EXECUTION)
+			else if(IOorPipe == false)
 			{
-				if(strcmp(tokens->items[0], "exit") == 0)
+				if(strcmp(tokens->items[0], "exit") == 0)//EXIT INTERNAL COMMAND (PART 9)
 				{
-					//waitpid(pid, &status, WNOHANG);
-					if(totalCommandHistory == 3)
+					if(totalCommandHistory == 3)//IF 3, PRINT LAST 3 JOBS (NO ORDER)
 					{
 						printf("Last (%d) valid commands:\n", totalCommandHistory);
 						printf("[1]: %s\n", cmd0);
 						printf("[2]: %s\n", cmd1);
 						printf("[3]: %s\n", cmd2);
 					}
-					else if(totalCommandHistory > 0)
+					else if(totalCommandHistory > 0)//IF <3 & >0, PRINT AS MANY AS CAN FIND (1 OR 2)
 					{
-						printf("Last valid command:\n");
+						printf("Last valid command(s):\n");
 						if(totalCommandHistory%3 == 1)
 							printf("[1]: %s\n", cmd0);
 						else if(totalCommandHistory%3 == 2)
@@ -413,43 +422,42 @@ int main()
 						else if(totalCommandHistory%3 == 3)
 							printf("[1]: %s\n", cmd2);
 					}
-					else
+					else//IF THERE ARE NONE, SAY SO
 					{
 						printf("No valid commands in history.\n");
 					}
 					exit(0);
 				}
-				else if(strcmp(tokens->items[0], "cd") == 0)
-				{
-					if(tokens->size > 2 && strcmp(tokens->items[2], "|") != 0 && 
+				else if(strcmp(tokens->items[0], "cd") == 0)//CD INTERNAL COMMAND EXECUTION (PART 9)
+				{//IF TOO MANY ARGUMENTS, SAY SO
+					if(tokens->size > 2 && strcmp(tokens->items[2], "|") != 0 &&
 					strcmp(tokens->items[2], "<") != 0 && strcmp(tokens->items[2], ">") != 0)
 					{
 						error = true;
 						printf("ERROR: too many arguments\n");
-					}
+					}//IF NO ARGUMENTS, CHDIR TO $HOME
 					else if(tokens->items[1] == NULL || strlen(tokens->items[1]) < 0)
 					{
 						chdir(getenv("HOME"));
-					}
+					}//CHECK IF CHDIR WORKS (IF SO, CHDIR)
 					else if(chdir(tokens->items[1]) != 0)
-					{
+					{//CHECKS IF DIRECTORY EXISTS. IF NOT, SAY SO
 						if(access(tokens->items[1], F_OK) != 0)
     						printf("ERROR: directory does not exist\n");
-						else
+						else//IF NOT A DIRECTORY, SAYS SO
 							printf("ERROR: not a directory\n");
 						error = true;
-						printf("Token at index 1 (directory path): %s\n", tokens->items[1]);
 					}
-				}
+				}//JOBS INTERNAL COMMAND EXECUTION (PART 9)
 				else if(strcmp(tokens->items[0], "jobs") == 0)
 				{
-					for (int i = 1; i <= 10; i++) 
+					for (int i = 1; i <= 10; i++) //PRINTS OUT ALL THE JOBS (IN STRUCTURE)
 					{
 						if(jobList[i].jobNumber > 0)
 							printf("[%d]+ %d %s\n", jobList[i].jobNumber, jobList[i].pid, jobList[i].commandLine);
 					}
-				}
-				else if(access(tokens->items[0], F_OK) == 0 && access(tokens->items[0], X_OK) == 0)//PART 5 (NO PIPE OR IO)
+				}//PART 5 (NO PIPE OR IO)
+				else if(access(tokens->items[0], F_OK) == 0 && access(tokens->items[0], X_OK) == 0)
 				{
 					int status;
 					pid_t pid = fork();
@@ -459,10 +467,9 @@ int main()
 					}
 					else {
 						waitpid(pid, &status, 0);
-						//exit(0);
 					}
 				}
-				else
+				else//IF NOT CD, JOBS, EXIT, BACKGROUND PROCESS, OR EXTERNAL COMMAND; PRINT ERROR
 				{
 					error = true;
 					printf("ERROR: Command not found or not executable.\n");
@@ -471,7 +478,7 @@ int main()
 			}
 		}
 
-		//COPY COMMAND FOR PT9 INTERNAL COMMAND EXECUTION: EXIT
+		//SAVES THE COMMAND HISTORY FOR EXIT INTERNAL COMMAND EXECUTION (PART 9)
 		if(!error)//MAKE SURE TO SET ERROR TO 0 IF COMMAND NOT WORK
 		{
 			if(commandHistory == 0)
@@ -499,45 +506,20 @@ int main()
 				totalCommandHistory++;
 			}
 		}
-		error0 = error;
+
+		//FREE HERE
 		free(input);
 		free_tokens(tokens);
-		//FREE HERE
 		free(pwd);
-	}
-
-	//COPY COMMAND FOR PT9 INTERNAL COMMAND EXECUTION: EXIT
-	if(!error0)//MAKE SURE TO SET ERROR TO 0 IF COMMAND NOT WORK
-	{
-		if(commandHistory == 0)
-		{
-			free(cmd0);
-			cmd0 = (char *)calloc(200, sizeof(char));
-			strncat(cmd0, tempcmd, strlen(tempcmd));
-			commandHistory++;
-			totalCommandHistory++;
-		}
-		else if(commandHistory == 1)
-		{
-			free(cmd1);
-			cmd1 = (char *)calloc(200, sizeof(char));
-			strncat(cmd1, tempcmd, strlen(tempcmd));
-			commandHistory++;
-			totalCommandHistory++;
-		}
-		else if(commandHistory == 2)
-		{
-			free(cmd2);
-			cmd2 = (char *)calloc(200, sizeof(char));
-			strncat(cmd2, tempcmd, strlen(tempcmd));
-			commandHistory = 0;
-			totalCommandHistory++;
-		}
 	}
 
 	return 0;
 }
 
+
+//PROVIDED FUNCTIONS FOR INPUT PROCESSING
+
+//GETS THE INPUT FROM THE COMMAND LINE
 char *get_input(void) {
 	char *buffer = NULL;
 	int bufsize = 0;
@@ -561,6 +543,7 @@ char *get_input(void) {
 	return buffer;
 }
 
+//MAKES AN EMPTY TOKENLIST
 tokenlist *new_tokenlist(void) {
 	tokenlist *tokens = (tokenlist *)malloc(sizeof(tokenlist));
 	tokens->size = 0;
@@ -569,6 +552,7 @@ tokenlist *new_tokenlist(void) {
 	return tokens;
 }
 
+//ADDS A TOKEN WITH SPECIFIED ITEM TO THE TOKENLIST PROVIDED 
 void add_token(tokenlist *tokens, char *item) {
 	int i = tokens->size;
 
@@ -580,6 +564,7 @@ void add_token(tokenlist *tokens, char *item) {
 	tokens->size += 1;
 }
 
+//GETS THE TOKENS FROM AN INPUT (PARSES)
 tokenlist *get_tokens(char *input) {
 	char *buf = (char *)malloc(strlen(input) + 1);
 	strcpy(buf, input);
@@ -594,6 +579,7 @@ tokenlist *get_tokens(char *input) {
 	return tokens;
 }
 
+//FREES THE TOKENS
 void free_tokens(tokenlist *tokens) {
 	for (int i = 0; i < tokens->size; i++)
 		free(tokens->items[i]);
