@@ -16,32 +16,6 @@ struct Job {
     char commandLine[512];
 };
 
-//function to return full path or null if not found(part 7)
-char* get_full_path(char *cmd)
-{
-	char *path = getenv("PATH");
-	if (!path) {
-    fprintf(stderr, "PATH environment variable not set.\n");
-    return NULL;
-}
-	char *pathCpy = strdup(path);
-	char *dir = strtok(pathCpy, ":");
-	//Iterates through each directory in the PATH and checks if the command exists in that directory
-	while(dir != NULL)
-	{
-		char executable[512];
-		snprintf(executable, sizeof(executable), "%s/%s", dir, cmd);
-		if(access(executable, F_OK) == 0 && access(executable, X_OK) ==0)
-		{
-			free(pathCpy);
-			return strdup(executable);  //return executable path
-		}
-		dir = strtok(NULL, ":");
-	}
-	free(pathCpy);
-	return NULL; //command not found, return null
-}
-
 //function to execute command in a child process with path(part 7)
 void execute_cmd_with_path(char *cmd, int writePipe[2], int readPipe[2]) {
     if (fork() == 0) { //creates child process using fork
@@ -87,37 +61,8 @@ int main()
 	char *cmd1 = (char *)malloc(sizeof(char *) * 200);
 	char *cmd2 = (char *)malloc(sizeof(char *) * 200);
 	char *tempcmd = (char *)malloc(sizeof(char *) * 200);
-	//FOR PT9 INTERNAL COMMAND EXECUTION JOBS
-	struct Job jobList[10];
-	for(int i = 0; i < 10; i++)
-		jobList[i].jobNumber = 0;
-	int jobCount = 0;
-	int jobsRunning = 0;
-
-	//FOR PT9 INTERNAL COMMAND EXECUTION EXIT
-	int commandHistory = 0;
-	int totalCommandHistory = 0;
-	char *cmd0 = (char *)malloc(sizeof(char *) * 200);
-	char *cmd1 = (char *)malloc(sizeof(char *) * 200);
-	char *cmd2 = (char *)malloc(sizeof(char *) * 200);
-	char *tempcmd = (char *)malloc(sizeof(char *) * 200);
+	
 	while (1) {
-
-		for(int i = 0; i < 10; i++)
-		{
-			pid_t pid = waitpid(jobList[i].pid, NULL, WNOHANG);
-			if(pid > 0)
-			{
-				jobList[i].jobNumber = 0;
-				jobsRunning--;
-				printf("\n[Job %d] done\n", pid);
-				printf("\n");
-			}
-		}
-
-		size_t size = 0;
-		size = pathconf(".", _PC_PATH_MAX);
-
 		for(int i = 0; i < 10; i++)
 		{
 			pid_t pid = waitpid(jobList[i].pid, NULL, WNOHANG);
@@ -135,9 +80,6 @@ int main()
 		//ENVIRONMENTAL VARIABLES FOR PROMPT (PT1)
 		const char *user = getenv("USER");
 		const char *machine = getenv("MACHINE");
-		char *pwd = NULL;		
-		if ((pwd = (char *)malloc((size_t)size)) != NULL) 
-        	getcwd(pwd, (size_t)size);
 		char *pwd = NULL;		
 		if ((pwd = (char *)malloc((size_t)size)) != NULL) 
         	getcwd(pwd, (size_t)size);
@@ -159,15 +101,6 @@ int main()
 		char *input = get_input();
 		tokenlist *tokens = get_tokens(input);
 		for (int i = 0; i < tokens->size; i++) {
-		}
-
-		//FOR PT9 EXIT (INTERNAL COMMANDS)
-		free(tempcmd);
-		tempcmd = (char *)calloc(200, sizeof(char));
-		for(int i = 0; i < tokens->size; i++)
-		{
-			strncat(tempcmd, tokens->items[i], strlen(tokens->items[i]));
-			strncat(tempcmd, " ", strlen(" "));
 		}
 
 		//FOR PT9 EXIT (INTERNAL COMMANDS)
@@ -276,37 +209,6 @@ int main()
 				
 			if((access(tokens->items[i], F_OK) != 0 || access(tokens->items[i], X_OK) != 0)
 			&& wantToExpand == true)
-			/*bool wantToExpand = true;
-			if(strcmp(tokens->items[i], "cd") == 0 || strcmp(tokens->items[i], "exit") == 0
-			|| strcmp(tokens->items[i], "jobs") == 0 || (i != 0 
-			&& strcmp(tokens->items[i-1],"|") != 0 && strcmp(tokens->items[i-1],"<") != 0
-			&& strcmp(tokens->items[i-1],">") != 0))
-				wantToExpand = false;//to prevent unwanted variables from being expanded
-			if(tokens->items[i+1] != NULL && strcmp(tokens->items[i+1], "<") == 0)
-				wantToExpand = false;
-			if(i > 0 && strcmp(tokens->items[i-1], ">") == 0)
-				wantToExpand = false;*/
-
-			bool wantToExpand = true;//PREVENT EXPANSION OF FILE NAMES (I/O), INTERNAL COMMANDS, AND FLAGS
-			if(strcmp(tokens->items[i], "cd") == 0)
-				wantToExpand = false;
-			else if(strcmp(tokens->items[i], "exit") == 0)
-				wantToExpand = false;
-			else if(strcmp(tokens->items[i], "jobs") == 0)
-				wantToExpand = false;
-			else if(tokens->items[i+1] != NULL && strcmp(tokens->items[i+1], "<") == 0)
-				wantToExpand = false;
-			else if(i > 0 && strcmp(tokens->items[i-1], ">") == 0)
-				wantToExpand = false;
-			else if(tokens->items[i+1] != NULL && strcmp(tokens->items[i+1], ">") == 0)
-				wantToExpand = true;
-			else if(i > 0 && strcmp(tokens->items[i-1], "<") == 0)
-				wantToExpand = true;
-			else if(i != 0 && strcmp(tokens->items[i-1],"|") != 0)
-				wantToExpand = false;
-				
-			if((access(tokens->items[i], F_OK) != 0 || access(tokens->items[i], X_OK) != 0)
-			&& wantToExpand == true)
 			{
 				//iterates through $PATH directories seperated by :
 				while(token != NULL)
@@ -321,9 +223,6 @@ int main()
 					{
 						tokens->items[i] = (char *)realloc(tokens->items[i], strlen(executable) + 1);
                                         	strcpy(tokens->items[i], executable);
-                                        	strcpy(tokens->items[i], executable);
-                                        	//printf("~~New token:%s\n",tokens->items[i]);
-						strcpy(tokens->items[i], executable);
                                         	strcpy(tokens->items[i], executable);
                                         	//printf("~~New token:%s\n",tokens->items[i]);
 						strcpy(tokens->items[i], executable);
