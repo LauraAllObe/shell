@@ -13,6 +13,8 @@ struct Job {
     pid_t pid;
     char commandLine[512];
 };
+
+/*
 //function to return full path or null if not found(part 7)
 char* get_full_path(char *cmd)
 {
@@ -37,7 +39,7 @@ char* get_full_path(char *cmd)
 	}
 	free(pathCpy);
 	return NULL; //command not found, return null
-}
+}*/
 /*
 //function to execute command in a child process with path(part 7)
 void execute_cmd_with_path(char *cmd, int writePipe[2], int readPipe[2]) {
