@@ -16,59 +16,78 @@ struct Job {
     char commandLine[512];
 };
 
-//function to return full path or null if not found(part 7)
-char* get_full_path(char *cmd)
-{
-	char *path = getenv("PATH");
-	if (!path) {
-    fprintf(stderr, "PATH environment variable not set.\n");
-    return NULL;
-}
-	char *pathCpy = strdup(path);
-	char *dir = strtok(pathCpy, ":");
-
-	while(dir != NULL)
-	{
-		char executable[512];
-		snprintf(executable, sizeof(executable), "%s/%s", dir, cmd);
-		if(access(executable, F_OK) == 0 && access(executable, X_OK) ==0)
-		{
-			free(pathCpy);
-			return strdup(executable);  //return executable path
-		}
-		dir = strtok(NULL, ":");
-	}
-	free(pathCpy);
-	return NULL; //command not found, return null
-}
-
-//function to execute command in a child process with path(part 7)
-void execute_cmd_with_path(char *cmd, int writePipe[2], int readPipe[2]) {
-    if (fork() == 0) { //creates child process using fork
-        if (writePipe) //If there's a write pipe, it duplicates its write end to standard output
-		{
-            dup2(writePipe[1], STDOUT_FILENO);
-            close(writePipe[0]);
-            close(writePipe[1]);
-        }
-
-        if (readPipe)  //If there's a read pipe, it duplicates its read end to standard input
-		{
-            dup2(readPipe[0], STDIN_FILENO);
-            close(readPipe[0]);
-            close(readPipe[1]);
-        }
-		//Executes the command using get_full_path
-        char *fullPath = get_full_path(cmd);
-        if (fullPath) {
-            char *cmd_args[] = { cmd, NULL };
-            execv(fullPath, cmd_args);
-            free(fullPath);
-        } else {
-            perror("Command not found/not executable");
-            exit(EXIT_FAILURE);
-        }
+//takes a command and returns the full path of it(part 7)
+char* get_full_path(char *cmd) {
+   char *path = getenv("PATH");
+    if (!path) {
+        fprintf(stderr, "PATH environment variable not set.\n");
+        return NULL;
     }
+    char *pathCpy = strdup(path);
+    char *dir = strtok(pathCpy, ":");
+
+    while (dir != NULL) {
+        char executable[512];
+        snprintf(executable, sizeof(executable), "%s/%s", dir, cmd);
+        if (access(executable, F_OK) == 0 && access(executable, X_OK) == 0) {
+            free(pathCpy);
+            return strdup(executable);  //return executable path
+        }
+        dir = strtok(NULL, ":");
+    }
+    free(pathCpy);
+    return NULL; 
+}
+
+//execute a given command with optional input and output redirection(part 7)
+void execute_command(char* cmd, int input, int output) {
+    //Variables to help in tokenizing the command and executing it
+	char* fullPath;
+    char* token;
+    char* saveptr;
+    char* cmd_copy = strdup(cmd);  //Copy command string to split it into tokens
+    int argc = 0;
+    char* cmd_args[128] = { NULL };  //assuming a command won't have more than 128 tokens
+
+    //Tokenize the command string into separate arguments
+    token = strtok_r(cmd_copy, " ", &saveptr);
+    while (token)
+	{
+        cmd_args[argc] = token;
+        argc++;
+        token = strtok_r(NULL, " ", &saveptr);
+    }
+	
+    //fetches the full path of the command (the first token in cmd_args) using the get_full_path function
+    fullPath = get_full_path(cmd_args[0]);
+    if (!fullPath) 
+	{
+        perror("Command not found/not executable");
+        free(cmd_copy);
+        exit(EXIT_FAILURE);
+    }
+	//creating child process using fork()
+   	if (fork() == 0) 
+	{
+        /*If the input file descriptor isn't the standard input(STDIN_FILENO),
+          the child process's standard input is redirected to input*/
+       if (input != STDIN_FILENO) 
+		{
+            dup2(input, STDIN_FILENO);
+            close(input);
+        }
+		//same as STDIN but with output instead
+        if (output != STDOUT_FILENO) 
+		{
+            dup2(output, STDOUT_FILENO);
+            close(output);
+        }
+		//execv replaces the current child process's image with the new process image specified by the command in fullPath
+        execv(fullPath, cmd_args);
+        free(fullPath);  //if execv fails the child process exit with failure status after freeing dynamically alloc. memory
+        exit(EXIT_FAILURE);
+    }
+    free(cmd_copy);  //in the parent process, the copied command string is freed
 }
 
 int main()
@@ -275,64 +294,46 @@ int main()
 
 
 		//PART 7 PIPING
-		int pipe1[2];
-		int pipe2[2];
-		//checking how many pipes are present
-		int pipeCount = 0;
-		int index1 = 0, index2 = 0;
-		for(int i = 0; i < tokens->size; i++)
-		{
-			if(strcmp(tokens->items[i], "|") == 0)
-			{
-				pipeCount++;
-				if(pipeCount == 1)
-					index1 = i;
-				if(pipeCount == 2)
-					index2 = i;
-			}
-		}
-		//Handling execution commands based on number of pipes in command line
-		switch (pipeCount)
-		{
-		case 1: //case one for guideline cmd1 | cmd2 (cmd1 redirects its standard output to the standard input of cmd2)
-			if (pipe(pipe1) == -1) 
-			{
-            	perror("pipe1 failed");
-            	exit(EXIT_FAILURE);
-        	}
-			//Uses the execute_cmd_with_path function to execute the two commands with appropriate read and write pipes
-			execute_cmd_with_path(tokens->items[0], pipe1, NULL);
-        	execute_cmd_with_path(tokens->items[index1 + 1], NULL, pipe1);
-			close(pipe1[0]);
-			close(pipe1[1]);
-			//wait for child processes to finish execution
-			wait(NULL);  
-        	wait(NULL);	
-			break;
+		//new part 7 test
+		int pipe1[2], pipe2[2];
+    
+    		char *cmd1 = "ls";
+    		char *cmd2 = "grep .c";
+    		char *cmd3 = "wc -l";
+    
+    		//Create the first pipe
+    		if (pipe(pipe1) == -1) {
+        		perror("pipe1 failed");
+        		exit(EXIT_FAILURE);
+    		}
 
-		case 2:  //case one for guideline cmd1 | cmd2 | cmd3
-			if (pipe(pipe1) == -1 || pipe(pipe2) == -1)
-			{
-            	perror("pipe failed");
-            	exit(EXIT_FAILURE);
+    		//Execute the first command
+    		execute_command(cmd1, STDIN_FILENO, pipe1[1]);
+    		close(pipe1[1]);
+    
+    		//If there's a third command, create another pipe and set up for the second command
+    		if (cmd3) {
+        		if (pipe(pipe2) == -1) {
+            			perror("pipe2 failed");
+            			exit(EXIT_FAILURE);
         	}
-			execute_cmd_with_path(tokens->items[0], pipe1, NULL);
-			execute_cmd_with_path(tokens->items[index1 + 1], pipe2, pipe1);
-			execute_cmd_with_path(tokens->items[index2 + 1], NULL, pipe2);
-			//in parent process, close both ends of pipe1 and pipe2
-			close(pipe1[0]);
-			close(pipe1[1]);
-			close(pipe2[0]);
-			close(pipe2[1]);
-			//make parent process wait for all three child processes to finish execution
-			wait(NULL);
-			wait(NULL);
-			wait(NULL);
-			break;
-		default:
-			fprintf(stderr, "Unsupported number of pipes: %d\n", pipeCount);
-			break;
-		} //end of part 7 
+       		execute_command(cmd2, pipe1[0], pipe2[1]);
+        	close(pipe2[1]);
+        	close(pipe1[0]);
+
+       		//Execute the third command
+        	execute_command(cmd3, pipe2[0], STDOUT_FILENO);
+        	close(pipe2[0]);
+    		} else {
+        	//If only two commands, directly set up for the second command
+        	execute_command(cmd2, pipe1[0], STDOUT_FILENO);
+        	close(pipe1[0]);
+    		}
+    
+    		wait(NULL);
+    		wait(NULL);
+   		if (cmd3) wait(NULL); 
+		//end of part 7 
 
 		if(error)
 		{
