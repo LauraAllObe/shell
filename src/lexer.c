@@ -59,6 +59,14 @@ int main()
 	int jobCount = 0;
 	int jobsRunning = 0;
 
+	//PT6 RETAIN I/O & BOOL FLAG FOR IF DRAWING/SENDING FROM/TO FILE
+	int infd = dup(STDIN_FILENO);
+	int outfd = dup(STDOUT_FILENO);
+	bool isFileIn = 0;
+	bool isFileOut = 0;
+	int rediri = 0;//REDIRECT INPUT
+	int rediro = 0; //REDIRECT OUTPUT- SAVE VARIABLE FOR LATER USE
+
 	//FOR PT9 INTERNAL COMMAND EXECUTION EXIT
 	int commandHistory = 0;
 	int totalCommandHistory = 0;
@@ -67,6 +75,24 @@ int main()
 	char *cmd2 = (char *)malloc(sizeof(char *) * 200);
 	char *tempcmd = (char *)malloc(sizeof(char *) * 200);
 	while (1) {
+		if((isFileIn == 1) && (feof(stdin)))	//PT 6, SWITCH BACK CONTROL @ EOF
+		{
+			dup2(infd, STDIN_FILENO);			
+			close(rediri);
+			isFileIn = 0;
+		}
+
+		for(int i = 0; i < 10; i++)
+		{
+			pid_t pid = waitpid(jobList[i].pid, NULL, WNOHANG);
+			if(pid > 0)
+			{
+				jobList[i].jobNumber = 0;
+				jobsRunning--;
+				printf("\n[Job %d] done\n", pid);
+				printf("\n");
+			}
+		}
 
 		for(int i = 0; i < 10; i++)
 		{
@@ -255,54 +281,57 @@ int main()
 				//}
 			}
 //PT6
-		if((strcmp(tokens->items[0], "cmd")==0)||(strcmp(tokens->items[0], "CMD")==0))
+		if((strcmp(tokens->items[i], "cmd")==0)||(strcmp(tokens->items[i], "CMD")==0))
 			{
 				//FILE OUT
-				if(strcmp(tokens->items[1], ">")==0)
+				if(strcmp(tokens->items[i+1], ">")==0)
 				{
-					if(tokens->size > 3)
+					if(tokens->items[i+3]!= NULL)
 					{		//MULTISTEP
-						if(strcmp(tokens->items[3], "<")==0)
+						if(strcmp(tokens->items[i+3], "<")==0)
 						{
-							int rediri = open(tokens->items[4], O_RDONLY);
+							rediri = open(tokens->items[i+4], O_RDONLY);
 							if(rediri == -1)
 							{
 								perror("The file requested does not exist or is not a regular file.");
 							} else
 							{
 								dup2(rediri, STDIN_FILENO);
-								close(rediri);
+								isFileIn = 1;
+								
 							}
 						}
 					}
-					int rediro = open(tokens->items[2], O_CREAT | O_RDWR | O_TRUNC, S_IRUSR | S_IWUSR); //important note: logical or (||) will cause the program to panic. Use (|) for flag seperation.
+					rediro = open(tokens->items[i+2], O_CREAT | O_RDWR | O_TRUNC, S_IRUSR | S_IWUSR); //important note: logical or (||) will cause the program to panic. Use (|) for flag seperation.
 					dup2(rediro, STDOUT_FILENO);
-					close(rediro);
+					isFileOut = 1;
+					
 				} //FILE IN
-				else if(strcmp(tokens->items[1], "<")==0)
+				else if(strcmp(tokens->items[i+1], "<")==0)
 				{
-					int rediri = open(tokens->items[2], O_RDONLY);
+					rediri = open(tokens->items[i+2], O_RDONLY);
 					if(rediri == -1)
 					{
 						perror("The file requested does not exist or is not a regular file.");
 					} else
 					{
 						dup2(rediri, STDIN_FILENO);
-						close(rediri);
+						isFileIn = 1;
+						
 					}
-					if(tokens->size > 3)
+					if(tokens->items[i+3]!=NULL)
 					{		//MULTISTEP
-						if(strcmp(tokens->items[3], ">")==0)
+						if(strcmp(tokens->items[i+3], ">")==0)
 						{
-							int rediro = open(tokens->items[4], O_CREAT | O_RDWR | O_TRUNC, S_IRUSR | S_IWUSR);
+							rediro = open(tokens->items[i+4], O_CREAT | O_RDWR | O_TRUNC, S_IRUSR | S_IWUSR);
 							dup2(rediro, STDOUT_FILENO);
-							close(rediro);
+							isFileOut = 1;
+							
 						}
 					}
 				}
 
 			}
-			
 		}
 
 
