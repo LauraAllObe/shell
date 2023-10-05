@@ -294,69 +294,6 @@ int main()
 			}
 		}
 
-		/*
-		//PART 7 PIPING
-		int pipe1[2];
-		int pipe2[2];
-		//checking how many pipes are present
-		int pipeCount = 0;
-		int index1 = 0, index2 = 0;
-		for(int i = 0; i < tokens->size; i++)
-		{
-			if(strcmp(tokens->items[i], "|") == 0)
-			{
-				pipeCount++;
-				if(pipeCount == 1)
-					index1 = i;
-				if(pipeCount == 2)
-					index2 = i;
-			}
-		}
-		//Handling execution commands based on number of pipes in command line
-		switch (pipeCount)
-		{
-		case 1: //case one for guideline cmd1 | cmd2 (cmd1 redirects its standard output to 
-		//the standard input of cmd2)
-			if (pipe(pipe1) == -1) 
-			{
-            	perror("pipe1 failed");
-            	exit(EXIT_FAILURE);
-        	}
-			//Uses the execute_cmd_with_path function to execute the two commands with appropriate
-			// read and write pipes
-			execute_cmd_with_path(tokens->items[0], pipe1, NULL);
-        	execute_cmd_with_path(tokens->items[index1 + 1], NULL, pipe1);
-			close(pipe1[0]);
-			close(pipe1[1]);
-			//wait for child processes to finish execution
-			wait(NULL);  
-        	wait(NULL);	
-			break;
-
-		case 2:  //case one for guideline cmd1 | cmd2 | cmd3
-			if (pipe(pipe1) == -1 || pipe(pipe2) == -1)
-			{
-            	perror("pipe failed");
-            	exit(EXIT_FAILURE);
-        	}
-			execute_cmd_with_path(tokens->items[0], pipe1, NULL);
-			execute_cmd_with_path(tokens->items[index1 + 1], pipe2, pipe1);
-			execute_cmd_with_path(tokens->items[index2 + 1], NULL, pipe2);
-			//in parent process, close both ends of pipe1 and pipe2
-			close(pipe1[0]);
-			close(pipe1[1]);
-			close(pipe2[0]);
-			close(pipe2[1]);
-			//make parent process wait for all three child processes to finish execution
-			wait(NULL);
-			wait(NULL);
-			wait(NULL);
-			break;
-		default:
-			fprintf(stderr, "Unsupported number of pipes: %d\n", pipeCount);
-			break;
-		} //end of part 7 */
-
 		//PARSING COMMANDS FOR FUTURE IO REDIRECTION
 		//THIS INDICATES THE INDEX LOCATION OF THE FIRST < OR > SYMBOL
 		int io1index = 0;//IF GREATER THAN 0, IT IS TRUE THAT IO REDIRECTION IS TAKING PLACE
@@ -427,8 +364,17 @@ int main()
 		printf("file2: %s\n", file2);
 		printf("file3: %s\n", file3);
 
+		tokenlist *commandTokens = get_tokens(comd1);
+
+		//TESTING
+		for(int i = 0; i < commandTokens->size; i++)
+		{
+			printf("command1tokens: %s ", commandTokens->items[i]);
+		}
+		printf("\n");
+
 		//PT6-I/O REDIRECTION
-		if(strcmp(comd1, "") != 0 && io1index > 0)
+		if(io1index > 0)
 		{
 			//FILE OUT
 			if(io1pointsleft == false)
