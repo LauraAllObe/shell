@@ -35,56 +35,9 @@ struct Job {
     char commandLine[512];
 };
 
-//takes a command and returns the full path of it(part 7)
-char* get_full_path(char *cmd) {
-   char *path = getenv("PATH");
-    if (!path) {
-        fprintf(stderr, "PATH environment variable not set.\n");
-        return NULL;
-    }
-    char *pathCpy = strdup(path);
-    char *dir = strtok(pathCpy, ":");
-
-    while (dir != NULL) {
-        char executable[512];
-        snprintf(executable, sizeof(executable), "%s/%s", dir, cmd);
-        if (access(executable, F_OK) == 0 && access(executable, X_OK) == 0) {
-            free(pathCpy);
-            return strdup(executable);  //return executable path
-        }
-        dir = strtok(NULL, ":");
-    }
-    free(pathCpy);
-    return NULL; 
-}
-
 //execute a given command with optional input and output redirection(part 7)
-void execute_command(char* cmd, int input, int output) {
+void execute_command(tokenlist* cmd, int input, int output) {
     //Variables to help in tokenizing the command and executing it
-	char* fullPath;
-    char* token;
-    char* saveptr;
-    char* cmd_copy = strdup(cmd);  //Copy command string to split it into tokens
-    int argc = 0;
-    char* cmd_args[128] = { NULL };  //assuming a command won't have more than 128 tokens
-
-    //Tokenize the command string into separate arguments
-    token = strtok_r(cmd_copy, " ", &saveptr);
-    while (token)
-	{
-        cmd_args[argc] = token;
-        argc++;
-        token = strtok_r(NULL, " ", &saveptr);
-    }
-	
-    //fetches the full path of the command (the first token in cmd_args) using the get_full_path function
-    fullPath = get_full_path(cmd_args[0]);
-    if (!fullPath) 
-	{
-        perror("Command not found/not executable");
-        free(cmd_copy);
-        exit(EXIT_FAILURE);
-    }
 	//creating child process using fork()
    	if (fork() == 0) 
 	{
@@ -102,11 +55,9 @@ void execute_command(char* cmd, int input, int output) {
             close(output);
         }
 		//execv replaces the current child process's image with the new process image specified by the command in fullPath
-        execv(fullPath, cmd_args);
-        free(fullPath);  //if execv fails the child process exit with failure status after freeing dynamically alloc. memory
+        execv(cmd->items[0], cmd->items);
         exit(EXIT_FAILURE);
     }
-    free(cmd_copy);  //in the parent process, the copied command string is freed
 }
 
 //part 10
@@ -560,7 +511,7 @@ int main()
 				}
 
 				//Execute the first command
-				execute_command(command1, STDIN_FILENO, pipe1[1]);
+				execute_command(command1tokens, STDIN_FILENO, pipe1[1]);
 				close(pipe1[1]);
 
 				//If there's a third command, create another pipe and set up for the second command
@@ -569,16 +520,16 @@ int main()
 							perror("pipe2 failed");
 							exit(EXIT_FAILURE);
 				}
-				execute_command(command2, pipe1[0], pipe2[1]);
+				execute_command(command2tokens, pipe1[0], pipe2[1]);
 				close(pipe2[1]);
 				close(pipe1[0]);
 
 				//Execute the third command
-				execute_command(command3, pipe2[0], STDOUT_FILENO);
+				execute_command(command3tokens, pipe2[0], STDOUT_FILENO);
 				close(pipe2[0]);
 				} else {
 				//If only two commands, directly set up for the second command
-				execute_command(command2, pipe1[0], STDOUT_FILENO);
+				execute_command(command2tokens, pipe1[0], STDOUT_FILENO);
 				close(pipe1[0]);
 				}
 
