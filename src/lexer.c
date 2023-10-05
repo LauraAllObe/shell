@@ -304,24 +304,29 @@ int main()
 		//IF TRUE, THIS INDICATES THAT IO REDIRECTION #2 IS <, > IF FALSE
 		bool io2pointsleft = false;
 		//ALL OF THE ABOVE VALUES CAN BE USED FOR CASE CHECKING!!
+		bool IO = false;
 		for(int i = 0; i < tokens->size; i++)
 		{
 			if(strcmp(tokens->items[i], "<") == 0 &&  io1index == 0)
 			{
+				IO = true;
 				io1index = i;
 				io1pointsleft = true;
 			}
 			else if(strcmp(tokens->items[i], ">") == 0 &&  io1index == 0)
 			{
+				IO = true;
 				io1index = i;
 			}
 			else if (strcmp(tokens->items[i], "<") == 0 && io2index == 0)
 			{
+				IO = true;
 				io2index = i;
 				io2pointsleft = true;
 			}
 			else if (strcmp(tokens->items[i], ">") == 0 && io2index == 0)
 			{
+				IO = true;
 				io2index = i;
 			}
 		}
@@ -374,7 +379,7 @@ int main()
 		printf("\n");
 
 		//PT6-I/O REDIRECTION
-		if(io1index > 0)
+		if(io1index > 0 && IO == true)
 		{
 			//FILE OUT
 			if(io1pointsleft == false)
@@ -382,7 +387,7 @@ int main()
 				if(io2index > 0)
 				{		//MULTISTEP
 				
-					if(io1pointsleft == true)
+					if(io2pointsleft == true)
 					{
 						rediri = open(file3, O_RDONLY);
 						if(rediri == -1)
@@ -414,7 +419,7 @@ int main()
 				}
 				if(io2index > 0)
 				{		//MULTISTEP
-					if(io1pointsleft == true)
+					if(io2pointsleft == true)
 					{
 						rediro = open(file3, O_CREAT | O_RDWR | O_TRUNC, S_IRUSR | S_IWUSR);
 						dup2(rediro, STDOUT_FILENO);
