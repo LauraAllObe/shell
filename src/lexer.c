@@ -529,6 +529,27 @@ int main()
 				printf("command2: %s\n", command2);
 				printf("command3: %s\n", command3);
 
+				tokenlist *command1tokens = get_tokens(command1);
+				tokenlist *command2tokens = get_tokens(command2);
+				tokenlist *command3tokens = get_tokens(command3);
+
+				//TESTING
+				for(int i = 0; i < command1tokens->size; i++)
+				{
+					printf("command1tokens: %s ", command1tokens->items[i]);
+				}
+				printf("\n");
+				for(int i = 0; i < command2tokens->size; i++)
+				{
+					printf("command2tokens: %s ", command2tokens->items[i]);
+				}
+				printf("\n");
+				for(int i = 0; i < command3tokens->size; i++)
+				{
+					printf("command3tokens: %s ", command3tokens->items[i]);
+				}
+				printf("\n");
+
 				//PART 7 PIPING
 				//new part 7 test
 				int pipe1[2], pipe2[2];
