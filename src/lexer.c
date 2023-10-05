@@ -206,14 +206,6 @@ int main()
 		for (int i = 0; i < tokens->size; i++) {
 		}
 
-		//Part 10 (External timeout executable)
-		//check for the timeout command after the loop
-		if(tokens->size >= 3 && strcmp(tokens->items[0], "./mytimeout") == 0)
-		{
-			execute_mytimeout(tokens);
-			continue;  //skip rest of loop for this iteration
-		}
-
 		//FOR EXIT INTERNAL COMMAND EXECUTION (PART 9)
 		//STORE THE COMMAND (WITHOUT PATH EXPANSION, ETC) FOR LATER USE
 		free(tempcmd);
@@ -351,88 +343,6 @@ int main()
 				}
 			}
 		}
-
-		//PARSING COMMANDS FOR FUTURE PIPES
-		//find the index (indexes) of pipes
-		int pipe1index = 0;//IF 0, NO PIPE, IF > 0 COULD BE 1 PIPE OR 2 PIPES
-		int pipe2index = 0;//IF 0, LESS THAN 2 PIPES, IF 1, 2 PIPES
-		for(int i = 0; i < tokens->size; i++)
-		{
-			if(strcmp(tokens->items[i], "|") == 0 && pipe1index == 0)
-				pipe1index = i;
-			else if (strcmp(tokens->items[i], "|") == 0 && pipe2index == 0)
-				pipe2index = i;
-		}
-		//TESTING
-		printf("pipe 1 index:%d\n", pipe1index);
-		printf("pipe 2 index:%d\n", pipe2index);
-
-		//iterate through all tokens and allocate each command (seperated by pipes)
-		char command1[100] = "";
-		char command2[100] = "";
-		char command3[100] = "";
-		for(int i = 0; i < tokens->size; i++)
-		{
-			if((i == pipe1index || i == pipe2index) && i != 0)
-				continue;
-			if(i < pipe1index && pipe1index != 0)
-			{
-				strcat(command1, tokens->items[i]);
-				strcat(command1, " ");
-			}
-			else if((i < pipe2index && pipe2index != 0)|| (i < tokens->size && pipe1index != 0 
-			&& pipe2index == 0))
-			{
-				strcat(command2, tokens->items[i]);
-				strcat(command2, " ");
-			}
-			else if(pipe2index != 0)
-			{
-				strcat(command3, tokens->items[i]);
-				strcat(command3, " ");
-			}
-		}
-		//TESTING
-		printf("command1: %s\n", command1);
-		printf("command2: %s\n", command2);
-		printf("command3: %s\n", command3);
-
-		//PART 7 PIPING
-		//new part 7 test
-		int pipe1[2], pipe2[2];
-		//Create the first pipe
-		if (pipe(pipe1) == -1) {
-			perror("pipe1 failed");
-			exit(EXIT_FAILURE);
-		}
-
-		//Execute the first command
-		execute_command(command1, STDIN_FILENO, pipe1[1]);
-		close(pipe1[1]);
-
-		//If there's a third command, create another pipe and set up for the second command
-		if (pipe2index > 0) {//checks if pipe2index exists (there is a second pipe)
-			if (pipe(pipe2) == -1) {
-					perror("pipe2 failed");
-					exit(EXIT_FAILURE);
-		}
-		execute_command(command2, pipe1[0], pipe2[1]);
-		close(pipe2[1]);
-		close(pipe1[0]);
-
-		//Execute the third command
-		execute_command(command3, pipe2[0], STDOUT_FILENO);
-		close(pipe2[0]);
-		} else {
-		//If only two commands, directly set up for the second command
-		execute_command(command2, pipe1[0], STDOUT_FILENO);
-		close(pipe1[0]);
-		}
-
-		wait(NULL);
-		wait(NULL);
-		if (pipe2index > 0) wait(NULL); //checks if pipe2index exists (there is a second pipe)
-		//end of part 7 
 
 		//THIS IS WHERE PREVIOUSLY INITIALIZED ERROR MESSAGES WILL BE DISPLAYED
 		if(error)
@@ -574,11 +484,102 @@ int main()
 			}
 			else if(IOorPipe == true && Pipe == true)
 			{
-				//PIPING
+				//PARSING COMMANDS FOR FUTURE PIPES
+				//find the index (indexes) of pipes
+				int pipe1index = 0;//IF 0, NO PIPE, IF > 0 COULD BE 1 PIPE OR 2 PIPES
+				int pipe2index = 0;//IF 0, LESS THAN 2 PIPES, IF 1, 2 PIPES
+				for(int i = 0; i < tokens->size; i++)
+				{
+					if(strcmp(tokens->items[i], "|") == 0 && pipe1index == 0)
+						pipe1index = i;
+					else if (strcmp(tokens->items[i], "|") == 0 && pipe2index == 0)
+						pipe2index = i;
+				}
+				//TESTING
+				printf("pipe 1 index:%d\n", pipe1index);
+				printf("pipe 2 index:%d\n", pipe2index);
+
+				//iterate through all tokens and allocate each command (seperated by pipes)
+				char command1[100] = "";
+				char command2[100] = "";
+				char command3[100] = "";
+				for(int i = 0; i < tokens->size; i++)
+				{
+					if((i == pipe1index || i == pipe2index) && i != 0)
+						continue;
+					if(i < pipe1index && pipe1index != 0)
+					{
+						strcat(command1, tokens->items[i]);
+						strcat(command1, " ");
+					}
+					else if((i < pipe2index && pipe2index != 0)|| (i < tokens->size && pipe1index != 0 
+					&& pipe2index == 0))
+					{
+						strcat(command2, tokens->items[i]);
+						strcat(command2, " ");
+					}
+					else if(pipe2index != 0)
+					{
+						strcat(command3, tokens->items[i]);
+						strcat(command3, " ");
+					}
+				}
+				//TESTING
+				printf("command1: %s\n", command1);
+				printf("command2: %s\n", command2);
+				printf("command3: %s\n", command3);
+
+				//PART 7 PIPING
+				//new part 7 test
+				int pipe1[2], pipe2[2];
+				//Create the first pipe
+				if (pipe(pipe1) == -1) {
+					perror("pipe1 failed");
+					exit(EXIT_FAILURE);
+				}
+
+				//Execute the first command
+				execute_command(command1, STDIN_FILENO, pipe1[1]);
+				close(pipe1[1]);
+
+				//If there's a third command, create another pipe and set up for the second command
+				if (pipe2index > 0) {//checks if pipe2index exists (there is a second pipe)
+					if (pipe(pipe2) == -1) {
+							perror("pipe2 failed");
+							exit(EXIT_FAILURE);
+				}
+				execute_command(command2, pipe1[0], pipe2[1]);
+				close(pipe2[1]);
+				close(pipe1[0]);
+
+				//Execute the third command
+				execute_command(command3, pipe2[0], STDOUT_FILENO);
+				close(pipe2[0]);
+				} else {
+				//If only two commands, directly set up for the second command
+				execute_command(command2, pipe1[0], STDOUT_FILENO);
+				close(pipe1[0]);
+				}
+
+				wait(NULL);
+				wait(NULL);
+				if (pipe2index > 0) wait(NULL); //checks if pipe2index exists (there is a second pipe)
+				//end of part 7 
 			}
 			else if(Pipe == false && IOorPipe == true)
 			{
 				//IO REDIRECTION
+			}
+			else if(strcmp(tokens->items[0], "./mytimeout") == 0)
+			{
+				
+				//Part 10 (External timeout executable)
+				//check for the timeout command after the loop
+				if(tokens->size >= 3 && strcmp(tokens->items[0], "./mytimeout") == 0)
+				{
+					execute_mytimeout(tokens);
+					continue;  //skip rest of loop for this iteration
+				}
 			}
 		}
 
