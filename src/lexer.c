@@ -17,6 +17,17 @@ CHECK PROJECT STRUCTURE WITH TA
 
 
 */
+//global variable for child process pt10
+pid_t child_pid = 0;
+//part 10
+/*signal handler for the alarm signal. This handler will be triggered when a process receives an SIGALRM
+ signal, which will be sent when the timer we'll set (with alarm()) expires.*/
+void alarm_handler(int signum) {
+     if (child_pid != 0) {
+        kill(child_pid, SIGTERM);
+    }
+}
+
 //JOB STRUCTURE FOR jOBS INTERNAL COMMAND EXECUTION (PART 9)
 struct Job {
     int jobNumber;
@@ -98,8 +109,47 @@ void execute_command(char* cmd, int input, int output) {
     free(cmd_copy);  //in the parent process, the copied command string is freed
 }
 
+//part 10
+void execute_mytimeout(tokenlist *tokens)
+{
+	if(tokens->size < 3)
+	{
+	    fprintf(stderr, "Usage: mytimeout [snds] [cmd] [cmd-args].\n");
+		return;
+	}
+
+	int duration = atoi(tokens->items[1]); //assumes the second item is the timeout value in seconds.
+	child_pid = fork(); //create child process
+	if (child_pid == -1) {
+        perror("fork");
+        exit(EXIT_FAILURE);
+    }
+	if(child_pid == 0)
+	{
+		char *cmd = tokens->items[2];
+        char *fullPath = get_full_path(cmd);
+        if (!fullPath) {
+            perror("Command not found/not executable");
+            exit(EXIT_FAILURE);
+		}
+
+		execv(fullPath, &tokens->items[2]); // Pass the remaining arguments to execv
+
+		// Only reached if exec fails
+        perror("exec");
+        exit(EXIT_FAILURE);
+    } else {
+        signal(SIGALRM, alarm_handler);
+        alarm(duration);
+        wait(NULL);
+    }
+}
+
 int main()
 {
+//part 10. this allows to capture the SIGALRM signal whenever an alarm goes off
+	signal(SIGALRM, alarm_handler);
+	
 	//FOR PART 9 INTERNAL COMMAND EXECUTION JOBS, INITIALIZE JOB LIST JOB # TO 0
 	struct Job jobList[10];
 	for(int i = 0; i < 10; i++)
@@ -154,6 +204,14 @@ int main()
 		char *input = get_input();
 		tokenlist *tokens = get_tokens(input);
 		for (int i = 0; i < tokens->size; i++) {
+		}
+
+		//Part 10 (External timeout executable)
+		//check for the timeout command after the loop
+		if(tokens->size >= 3 && strcmp(tokens->items[0], "./mytimeout") == 0)
+		{
+			execute_mytimeout(tokens);
+			continue;  //skip rest of loop for this iteration
 		}
 
 		//FOR EXIT INTERNAL COMMAND EXECUTION (PART 9)
