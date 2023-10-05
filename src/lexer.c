@@ -292,58 +292,6 @@ int main()
 					token = strtok(NULL, ":");
 				}
 			}
-		//PT6-I/O REDIRECTION
-		if((strcmp(tokens->items[i], "cmd")==0)||(strcmp(tokens->items[i], "CMD")==0))
-			{
-				//FILE OUT
-				if(strcmp(tokens->items[i+1], ">")==0)
-				{
-					if(tokens->items[i+3]!= NULL)
-					{		//MULTISTEP
-						if(strcmp(tokens->items[i+3], "<")==0)
-						{
-							rediri = open(tokens->items[i+4], O_RDONLY);
-							if(rediri == -1)
-							{
-								perror("The file requested does not exist or is not a regular file.");
-							} else
-							{
-								dup2(rediri, STDIN_FILENO);
-								isFileIn = 1;
-								
-							}
-						}
-					}
-					rediro = open(tokens->items[i+2], O_CREAT | O_RDWR | O_TRUNC, S_IRUSR | S_IWUSR); //important note: logical or (||) will cause the program to panic. Use (|) for flag seperation.
-					dup2(rediro, STDOUT_FILENO);
-					isFileOut = 1;
-					
-				} //FILE IN
-				else if(strcmp(tokens->items[i+1], "<")==0)
-				{
-					rediri = open(tokens->items[i+2], O_RDONLY);
-					if(rediri == -1)
-					{
-						perror("The file requested does not exist or is not a regular file.");
-					} else
-					{
-						dup2(rediri, STDIN_FILENO);
-						isFileIn = 1;
-						
-					}
-					if(tokens->items[i+3]!=NULL)
-					{		//MULTISTEP
-						if(strcmp(tokens->items[i+3], ">")==0)
-						{
-							rediro = open(tokens->items[i+4], O_CREAT | O_RDWR | O_TRUNC, S_IRUSR | S_IWUSR);
-							dup2(rediro, STDOUT_FILENO);
-							isFileOut = 1;
-							
-						}
-					}
-				}
-
-			}
 		}
 
 		/*
@@ -408,6 +356,128 @@ int main()
 			fprintf(stderr, "Unsupported number of pipes: %d\n", pipeCount);
 			break;
 		} //end of part 7 */
+
+		//PARSING COMMANDS FOR FUTURE IO REDIRECTION
+		//THIS INDICATES THE INDEX LOCATION OF THE FIRST < OR > SYMBOL
+		int io1index = 0;//IF GREATER THAN 0, IT IS TRUE THAT IO REDIRECTION IS TAKING PLACE
+		//THIS INDICATES THE INDEX LOCATION OF THE SECOND < OR > SYMBOL
+		int io2index = 0;//IF GREATER THAN 0, IT IS TRUE THAT TWO IO REDIRECTIONS ARE TAKING PLACE
+		//IF TRUE, THIS INDICATES THAT IO REDIRECTION #1 IS <, > IF FALSE
+		bool io1pointsleft = false;
+		//IF TRUE, THIS INDICATES THAT IO REDIRECTION #2 IS <, > IF FALSE
+		bool io2pointsleft = false;
+		//ALL OF THE ABOVE VALUES CAN BE USED FOR CASE CHECKING!!
+		for(int i = 0; i < tokens->size; i++)
+		{
+			if(strcmp(tokens->items[i], "<") == 0 &&  io1index == 0)
+			{
+				io1index = i;
+				io1pointsleft = true;
+			}
+			else if(strcmp(tokens->items[i], ">") == 0 &&  io1index == 0)
+			{
+				io1index = i;
+			}
+			else if (strcmp(tokens->items[i], "<") == 0 && io2index == 0)
+			{
+				io2index = i;
+				io2pointsleft = true;
+			}
+			else if (strcmp(tokens->items[i], ">") == 0 && io2index == 0)
+			{
+				io2index = i;
+			}
+		}
+		//TESTING
+		printf("io 1 index:%d\n", io1index);
+		printf("io 2 index:%d\n", io2index);
+		printf("io 1 is < (points left) is %d (1 = true/<, 0 = false/>)\n", io1pointsleft);
+		printf("io 2 is < (points left) is %d (1 = true/<, 0 = false/>)\n", io2pointsleft);
+
+		//iterate through all tokens and allocate each command (seperated by IO redirects)
+		//THIS HOLDS THE VALUE OF THE COMMAND, "" IF NONE
+		char comd1[100] = "";
+		//THIS HOLDS THE VALUE OF THE FIRST FILE, "" IF NONE
+		char file2[100] = "";
+		//THIS HOLDS THE VALUE OF THE SECOND FILE, "" IF NONE
+		char file3[100] = "";
+		for(int i = 0; i < tokens->size; i++)
+		{
+			if((i == io1index || i == io2index) && i != 0)
+				continue;
+			if(i < io1index && io1index != 0)
+			{
+				strcat(comd1, tokens->items[i]);
+				strcat(comd1, " ");
+			}
+			else if((i < io2index && io2index != 0)|| (i < tokens->size && io1index != 0 
+			&& io2index == 0))
+			{
+				strcat(file2, tokens->items[i]);
+				strcat(file2, " ");
+			}
+			else if(io2index != 0)
+			{
+				strcat(file3, tokens->items[i]);
+				strcat(file3, " ");
+			}
+		}
+		//TESTING
+		printf("comd1: %s\n", comd1);
+		printf("file2: %s\n", file2);
+		printf("file3: %s\n", file3);
+
+		//PT6-I/O REDIRECTION
+		if(strcmp(comd1, "") != 0 && io1index > 0)
+		{
+			//FILE OUT
+			if(io1pointsleft == false)
+			{
+				if(io2index > 0)
+				{		//MULTISTEP
+				
+					if(io1pointsleft == true)
+					{
+						rediri = open(file3, O_RDONLY);
+						if(rediri == -1)
+						{
+							perror("The file requested does not exist or is not a regular file.");
+						} else
+						{
+							dup2(rediri, STDIN_FILENO);
+							isFileIn = 1;
+							
+						}
+					}
+				}
+				rediro = open(file2, O_CREAT | O_RDWR | O_TRUNC, S_IRUSR | S_IWUSR); //important note: logical or (||) will cause the program to panic. Use (|) for flag seperation.
+				dup2(rediro, STDOUT_FILENO);
+				isFileOut = 1;
+				
+			} //FILE IN
+			else if(io1pointsleft == true)
+			{
+				rediri = open(file2, O_RDONLY);
+				if(rediri == -1)
+				{
+					perror("The file requested does not exist or is not a regular file.");
+				} else
+				{
+					dup2(rediri, STDIN_FILENO);
+					isFileIn = 1;
+				}
+				if(io2index > 0)
+				{		//MULTISTEP
+					if(io1pointsleft == true)
+					{
+						rediro = open(file3, O_CREAT | O_RDWR | O_TRUNC, S_IRUSR | S_IWUSR);
+						dup2(rediro, STDOUT_FILENO);
+						isFileOut = 1;
+					}
+				}
+			}
+
+		}
 
 		//THIS IS WHERE PREVIOUSLY INITIALIZED ERROR MESSAGES WILL BE DISPLAYED
 		if(error)
