@@ -77,14 +77,17 @@ void execute_mytimeout(tokenlist *tokens)
     }
 	if(child_pid == 0)
 	{
-		char *cmd = tokens->items[2];
-        char *fullPath = get_full_path(cmd);
-        if (!fullPath) {
-            perror("Command not found/not executable");
-            exit(EXIT_FAILURE);
+		tokenlist *new_tokens;
+		for(int i = 2; i < tokens->size; i++)
+		{
+			if(strcmp(tokens->items[0], "./mytimeout") == 0);
+				add_token(new_tokens, tokens->items[i]);
 		}
+		new_tokens->items[new_tokens->size] = NULL;  // Null-terminate the new token list for execv
+		
+		execv(new_tokens->items[0], new_tokens->items);
 
-		execv(fullPath, &tokens->items[2]); // Pass the remaining arguments to execv
+		//execv(fullPath, &tokens->items[2]); // Pass the remaining arguments to execv
 
 		// Only reached if exec fails
         perror("exec");
