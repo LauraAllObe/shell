@@ -8,15 +8,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-/*
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~OFFICE HOUR QUESTIONS (TO KEEP TRACK):~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-WHEN CD, DOES DIRECTORY GO IN PROMPT (ABSOLUTE WORKING DIRECTORY -> CURRENT WORKING DIRECTORY)?
-CAN OUR PROJECT STRUCTURE FEATURE A .GITIGNORE FILE?
-CAN WE HAVE LEXER.C AND LEXER.H INSTEAD OF SHELL.H, SHELL.C, AND MAIN.C?
-CHECK PROJECT STRUCTURE WITH TA
-
-
-*/
 //JOB STRUCTURE FOR jOBS INTERNAL COMMAND EXECUTION (PART 9)
 struct Job {
     int jobNumber;
@@ -24,48 +15,18 @@ struct Job {
     char commandLine[512];
 };
 
-/*
-//function to return full path or null if not found(part 7)
-char* get_full_path(char *cmd)
-{
-	char *path = getenv("PATH");
-	if (!path) {
-    fprintf(stderr, "PATH environment variable not set.\n");
-    return NULL;
-}
-	char *pathCpy = strdup(path);
-	char *dir = strtok(pathCpy, ":");
-
-	while(dir != NULL)
+//execute a given command with optional input and output redirection(part 7)
+void execute_command(tokenlist* cmd, int input, int output) {
+    //Variables to help in tokenizing the command and executing it
+	//creating child process using fork()
+   	if (fork() == 0) 
 	{
-		char executable[512];
-		snprintf(executable, sizeof(executable), "%s/%s", dir, cmd);
-		if(access(executable, F_OK) == 0 && access(executable, X_OK) ==0)
+        /*If the input file descriptor isn't the standard input(STDIN_FILENO),
+          the child process's standard input is redirected to input*/
+       if (input != STDIN_FILENO) 
 		{
-			free(pathCpy);
-			return strdup(executable);  //return executable path
-		}
-		dir = strtok(NULL, ":");
-	}
-	free(pathCpy);
-	return NULL; //command not found, return null
-}*/
-/*
-//function to execute command in a child process with path(part 7)
-void execute_cmd_with_path(char *cmd, int writePipe[2], int readPipe[2]) {
-    if (fork() == 0) { //creates child process using fork
-        if (writePipe) //If there's a write pipe, it duplicates its write end to standard output
-		{
-            dup2(writePipe[1], STDOUT_FILENO);
-            close(writePipe[0]);
-            close(writePipe[1]);
-        }
-
-        if (readPipe)  //If there's a read pipe, it duplicates its read end to standard input
-		{
-            dup2(readPipe[0], STDIN_FILENO);
-            close(readPipe[0]);
-            close(readPipe[1]);
+            dup2(input, STDIN_FILENO);
+            close(input);
         }
 		//Executes the command using get_full_path
         char *fullPath = get_full_path(cmd);
@@ -78,7 +39,7 @@ void execute_cmd_with_path(char *cmd, int writePipe[2], int readPipe[2]) {
             exit(EXIT_FAILURE);
         }
     }
-}*/
+}
 
 int main()
 {
@@ -148,7 +109,7 @@ int main()
 			strncat(tempcmd, " ", strlen(" "));
 		}
 
-		//ITERATE THROUGH TOKENS FOR ENVIRONMENT VARIABLE EXPANSION (PART 2)
+		//ITERATE THROUGH TOKENS FOR ENVIRONMENT VARIABLE EXPANSION (PT2)
 		for (int i = 0; i < tokens->size; i++)
 		{
 			//EXTRA CREDIT #3 (EXECUTE SHELL WITHIN SHELL), THIS EXPANDS BIN/SHELL AND
@@ -164,7 +125,7 @@ int main()
 			if(tokens->items[i][0]=='$')
 			{				
 				char variable[50];
-				printf("%s", tokens->items[i]);
+				//printf("%s", tokens->items[i]);
 				strncpy(variable, tokens->items[i] + 1, strlen(tokens->items[i]));
 				variable[strlen(variable)] = '\0';
 
@@ -276,69 +237,6 @@ int main()
 			}
 		}
 
-		/*
-		//PART 7 PIPING
-		int pipe1[2];
-		int pipe2[2];
-		//checking how many pipes are present
-		int pipeCount = 0;
-		int index1 = 0, index2 = 0;
-		for(int i = 0; i < tokens->size; i++)
-		{
-			if(strcmp(tokens->items[i], "|") == 0)
-			{
-				pipeCount++;
-				if(pipeCount == 1)
-					index1 = i;
-				if(pipeCount == 2)
-					index2 = i;
-			}
-		}
-		//Handling execution commands based on number of pipes in command line
-		switch (pipeCount)
-		{
-		case 1: //case one for guideline cmd1 | cmd2 (cmd1 redirects its standard output to 
-		//the standard input of cmd2)
-			if (pipe(pipe1) == -1) 
-			{
-            	perror("pipe1 failed");
-            	exit(EXIT_FAILURE);
-        	}
-			//Uses the execute_cmd_with_path function to execute the two commands with appropriate
-			// read and write pipes
-			execute_cmd_with_path(tokens->items[0], pipe1, NULL);
-        	execute_cmd_with_path(tokens->items[index1 + 1], NULL, pipe1);
-			close(pipe1[0]);
-			close(pipe1[1]);
-			//wait for child processes to finish execution
-			wait(NULL);  
-        	wait(NULL);	
-			break;
-
-		case 2:  //case one for guideline cmd1 | cmd2 | cmd3
-			if (pipe(pipe1) == -1 || pipe(pipe2) == -1)
-			{
-            	perror("pipe failed");
-            	exit(EXIT_FAILURE);
-        	}
-			execute_cmd_with_path(tokens->items[0], pipe1, NULL);
-			execute_cmd_with_path(tokens->items[index1 + 1], pipe2, pipe1);
-			execute_cmd_with_path(tokens->items[index2 + 1], NULL, pipe2);
-			//in parent process, close both ends of pipe1 and pipe2
-			close(pipe1[0]);
-			close(pipe1[1]);
-			close(pipe2[0]);
-			close(pipe2[1]);
-			//make parent process wait for all three child processes to finish execution
-			wait(NULL);
-			wait(NULL);
-			wait(NULL);
-			break;
-		default:
-			fprintf(stderr, "Unsupported number of pipes: %d\n", pipeCount);
-			break;
-		} //end of part 7 */
-
 		//THIS IS WHERE PREVIOUSLY INITIALIZED ERROR MESSAGES WILL BE DISPLAYED
 		if(error)
 		{
@@ -347,15 +245,16 @@ int main()
 		}
 		else
 		{
-			
-			//CHECKS TO MAKE SURE COMMAND DOES NOT HAVE ANY <, >, OR | TOKENS
-			//(SEPERATE CASES ELSEWHERE IN FILE FOR <, >, |)
-			int IOorPipe = false;//SO THAT #5, 8, & 9 DO NOT INTERFERE WITH 6 & 7
+			//SEPERATE CASES FOR IOREDIRECT, PIPING, BACKGROUND, EXTERNAL, AND INTERNAL COMMANDS EX
+			int IOorPipe = false;//TO KNOW WHEN TO EXECUTE BACKGORUND, EXTERNAL, AND INTERNAL
+			int Pipe = false;//TO KNOW WHEN TO EXECUTE PIPING VERSUS IO REDIRECT
 			for(int i = 0; i < tokens->size; i++)
 			{
 				if(strcmp(tokens->items[i], "|") == 0 || strcmp(tokens->items[i], ">") == 0
 				|| strcmp(tokens->items[i], "<") == 0)
 					IOorPipe = true;
+				if(strcmp(tokens->items[i], "|") == 0)
+					Pipe = true;
 			}
 
 			//(PART 9) BACKGROUND PROCESSING (EXCLUDING IO AND PIPE)
@@ -475,6 +374,115 @@ int main()
 					printf("ERROR: Command not found or not executable.\n");
 				}
 				
+			}
+			else if(IOorPipe == true && Pipe == true)
+			{
+				//PARSING COMMANDS FOR FUTURE PIPES
+				//find the index (indexes) of pipes
+				int pipe1index = 0;//IF 0, NO PIPE, IF > 0 COULD BE 1 PIPE OR 2 PIPES
+				int pipe2index = 0;//IF 0, LESS THAN 2 PIPES, IF 1, 2 PIPES
+				for(int i = 0; i < tokens->size; i++)
+				{
+					if(strcmp(tokens->items[i], "|") == 0 && pipe1index == 0)
+						pipe1index = i;
+					else if (strcmp(tokens->items[i], "|") == 0 && pipe2index == 0)
+						pipe2index = i;
+				}
+				//TESTING
+				printf("pipe 1 index:%d\n", pipe1index);
+				printf("pipe 2 index:%d\n", pipe2index);
+
+				//iterate through all tokens and allocate each command (seperated by pipes)
+				char command1[100] = "";
+				char command2[100] = "";
+				char command3[100] = "";
+				for(int i = 0; i < tokens->size; i++)
+				{
+					if((i == pipe1index || i == pipe2index) && i != 0)
+						continue;
+					if(i < pipe1index && pipe1index != 0)
+					{
+						strcat(command1, tokens->items[i]);
+						strcat(command1, " ");
+					}
+					else if((i < pipe2index && pipe2index != 0)|| (i < tokens->size && pipe1index != 0 
+					&& pipe2index == 0))
+					{
+						strcat(command2, tokens->items[i]);
+						strcat(command2, " ");
+					}
+					else if(pipe2index != 0)
+					{
+						strcat(command3, tokens->items[i]);
+						strcat(command3, " ");
+					}
+				}
+				//TESTING
+				printf("command1: %s\n", command1);
+				printf("command2: %s\n", command2);
+				printf("command3: %s\n", command3);
+
+				tokenlist *command1tokens = get_tokens(command1);
+				tokenlist *command2tokens = get_tokens(command2);
+				tokenlist *command3tokens = get_tokens(command3);
+
+				//TESTING
+				for(int i = 0; i < command1tokens->size; i++)
+				{
+					printf("command1tokens: %s ", command1tokens->items[i]);
+				}
+				printf("\n");
+				for(int i = 0; i < command2tokens->size; i++)
+				{
+					printf("command2tokens: %s ", command2tokens->items[i]);
+				}
+				printf("\n");
+				for(int i = 0; i < command3tokens->size; i++)
+				{
+					printf("command3tokens: %s ", command3tokens->items[i]);
+				}
+				printf("\n");
+
+				//PART 7 PIPING
+				//new part 7 test
+				int pipe1[2], pipe2[2];
+				//Create the first pipe
+				if (pipe(pipe1) == -1) {
+					perror("pipe1 failed");
+					exit(EXIT_FAILURE);
+				}
+
+				//Execute the first command
+				execute_command(command1tokens, STDIN_FILENO, pipe1[1]);
+				close(pipe1[1]);
+
+				//If there's a third command, create another pipe and set up for the second command
+				if (pipe2index > 0) {//checks if pipe2index exists (there is a second pipe)
+					if (pipe(pipe2) == -1) {
+							perror("pipe2 failed");
+							exit(EXIT_FAILURE);
+				}
+				execute_command(command2tokens, pipe1[0], pipe2[1]);
+				close(pipe2[1]);
+				close(pipe1[0]);
+
+				//Execute the third command
+				execute_command(command3tokens, pipe2[0], STDOUT_FILENO);
+				close(pipe2[0]);
+				} else {
+				//If only two commands, directly set up for the second command
+				execute_command(command2tokens, pipe1[0], STDOUT_FILENO);
+				close(pipe1[0]);
+				}
+
+				wait(NULL);
+				wait(NULL);
+				if (pipe2index > 0) wait(NULL); //checks if pipe2index exists (there is a second pipe)
+				//end of part 7 
+			}
+			else if(Pipe == false && IOorPipe == true)
+			{
+				//IO REDIRECTION
 			}
 		}
 
