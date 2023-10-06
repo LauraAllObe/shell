@@ -40,49 +40,9 @@ void execute_command(tokenlist* cmd, int input, int output) {
     }
 }
 
-/*
-//part 10
-void execute_mytimeout(tokenlist *tokens)
-{
-	if(tokens->size < 3)
-	{
-	    fprintf(stderr, "Usage: mytimeout [snds] [cmd] [cmd-args].\n");
-		return;
-	}
-
-	int duration = atoi(tokens->items[1]); //assumes the second item is the timeout value in seconds.
-	child_pid = fork(); //create child process
-	if (child_pid == -1) {
-        perror("fork");
-        exit(EXIT_FAILURE);
-    }
-	if(child_pid == 0)
-	{
-		tokenlist *new_tokens;
-		for(int i = 2; i < tokens->size; i++)
-		{
-			if(strcmp(tokens->items[0], "./mytimeout") == 0);
-				add_token(new_tokens, tokens->items[i]);
-		}
-		new_tokens->items[new_tokens->size] = NULL;  // Null-terminate the new token list for execv
-		
-		execv(new_tokens->items[0], new_tokens->items);
-
-		//execv(fullPath, &tokens->items[2]); // Pass the remaining arguments to execv
-
-		// Only reached if exec fails
-        perror("exec");
-        exit(EXIT_FAILURE);
-    } else {
-        signal(SIGALRM, alarm_handler);
-        alarm(duration);
-        wait(NULL);
-    }
-}*/
-
 int main()
 {
-	
+
 	//FOR PART 9 INTERNAL COMMAND EXECUTION JOBS, INITIALIZE JOB LIST JOB # TO 0
 	struct Job jobList[10];
 	for(int i = 0; i < 10; i++)
@@ -148,6 +108,9 @@ int main()
 			strncat(tempcmd, tokens->items[i], strlen(tokens->items[i]));
 			strncat(tempcmd, " ", strlen(" "));
 		}
+
+		if(tokens->size <= 0)
+			continue;
 
 		//ITERATE THROUGH TOKENS FOR ENVIRONMENT VARIABLE EXPANSION (PART 2)
 		for (int i = 0; i < tokens->size; i++)
