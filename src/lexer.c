@@ -8,26 +8,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-/*
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~OFFICE HOUR QUESTIONS (TO KEEP TRACK):~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-WHEN CD, DOES DIRECTORY GO IN PROMPT (ABSOLUTE WORKING DIRECTORY -> CURRENT WORKING DIRECTORY)?
-CAN OUR PROJECT STRUCTURE FEATURE A .GITIGNORE FILE?
-CAN WE HAVE LEXER.C AND LEXER.H INSTEAD OF SHELL.H, SHELL.C, AND MAIN.C?
-CHECK PROJECT STRUCTURE WITH TA
-
-
-*/
-//global variable for child process pt10
-pid_t child_pid = 0;
-//part 10
-/*signal handler for the alarm signal. This handler will be triggered when a process receives an SIGALRM
- signal, which will be sent when the timer we'll set (with alarm()) expires.*/
-void alarm_handler(int signum) {
-     if (child_pid != 0) {
-        kill(child_pid, SIGTERM);
-    }
-}
-
 //JOB STRUCTURE FOR jOBS INTERNAL COMMAND EXECUTION (PART 9)
 struct Job {
     int jobNumber;
@@ -60,6 +40,7 @@ void execute_command(tokenlist* cmd, int input, int output) {
     }
 }
 
+/*
 //part 10
 void execute_mytimeout(tokenlist *tokens)
 {
@@ -97,12 +78,10 @@ void execute_mytimeout(tokenlist *tokens)
         alarm(duration);
         wait(NULL);
     }
-}
+}*/
 
 int main()
 {
-//part 10. this allows to capture the SIGALRM signal whenever an alarm goes off
-	signal(SIGALRM, alarm_handler);
 	
 	//FOR PART 9 INTERNAL COMMAND EXECUTION JOBS, INITIALIZE JOB LIST JOB # TO 0
 	struct Job jobList[10];
@@ -544,17 +523,6 @@ int main()
 			else if(Pipe == false && IOorPipe == true)
 			{
 				//IO REDIRECTION
-			}
-			else if(strcmp(tokens->items[0], "./mytimeout") == 0)
-			{
-				
-				//Part 10 (External timeout executable)
-				//check for the timeout command after the loop
-				if(tokens->size >= 3 && strcmp(tokens->items[0], "./mytimeout") == 0)
-				{
-					execute_mytimeout(tokens);
-					continue;  //skip rest of loop for this iteration
-				}
 			}
 		}
 
