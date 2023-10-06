@@ -1,4 +1,5 @@
-[![Review Assignment Due Date](https://classroom.github.com/assets/deadline-readme-button-24ddc0f5d75046c5622901739e7c5dd533143b0c8e959d652212380cedb1ea36.svg)](https://classroom.github.com/a/wtw9xmrw)
+[![Review Assignment Due Date](https://classroom.github.com/assets/deadline-readme-button-24ddc0f5d75046c5622901739e7c5dd533143b0c8e959d652212380cedb1ea36.svg)]
+(https://classroom.github.com/a/wtw9xmrw)
 # Shell
 
 [Description]
@@ -10,14 +11,13 @@
 ## Division of Labor
 
 ### Part 1: Prompt
-- **Responsibilities**: Greet the user with a prompt that indicates 
-the absolute working directory, the user name, and the machine name.
+- **Responsibilities**: Greet the user with a prompt that indicates the current working directory, 
+the user name, and the machine name.
 - **Assigned to**: Laura Obermaier
 
 ### Part 2: Environment Variables
-- **Responsibilities**: Replace tokens prefixed with the dollar sign 
-character ($) with their corresponding values (before commands
-are processed.)
+- **Responsibilities**: Replace tokens prefixed with the dollar sign character ($) with their 
+corresponding values (before commands are processed.)
 - **Assigned to**: Laura Obermaier
 
 ### Part 3: Tilde Expansion
@@ -26,18 +26,17 @@ are processed.)
 - **Assigned to**: Jeyma Rodrìguez
 
 ### Part 4: $PATH Search
-- **Responsibilities**: employ string operations to extract and examine
- each directory in the $PATH variable. In the event that the command is 
- not found in any of the directories listed in $PATH, an error message 
- should be displayed. Handling this scenario involves proper error 
- detection and reporting, ensuring a clear indication when a command 
- is not available within the directories specified in $PATH.
+- **Responsibilities**: employ string operations to extract and examine each directory in the $PATH 
+variable. In the event that the command is not found in any of the directories listed in $PATH, an 
+error message should be displayed. Handling this scenario involves proper error detection and 
+reporting, ensuring a clear indication when a command is not available within the directories 
+specified in $PATH.
 - **Assigned to**: Autumn Harp, Jeyma Rodrìguez, Laura Obermaier
 
 ### Part 5: External Command Execution
-- **Responsibilities**: execute external commands using execv(). This
-part only covers one command execution for now, as we are still working
-on piping, I/O redirection, and background processing.
+- **Responsibilities**: execute external commands using execv(). Single command execution is split
+from command execution with piping and I/O redirection, which was carried out by each of the
+assignees of part 6 and part 7.
 - **Assigned to**: Autumn Harp, Laura Obermaier
 
 ### Part 6: I/O Redirection
@@ -49,52 +48,58 @@ on piping, I/O redirection, and background processing.
 - **Assigned to**: Jeyma Rodriguez
 
 ### Part 8: Background Processing
-- **Responsibilities**: [Description]
+- **Responsibilities**: Executes processes in the background for cmd &, cmd1 | cmd2 &, cmd > file &,
+cmd < file &, and cmd < file_in > file_out &. Increments jobs structure when execution starts. When
+execution is finished, decrements job strucutre. (this is more so a part of #9 than #8). There will
+be at most 10 background processes.
 - **Assigned to**: Laura Obermaier
 
 ### Part 9: Internal Command Execution
-- **Responsibilities**: [Description]
-- **Assigned to**: 
+- **Responsibilities**: Implements cd, exit, and jobs internal commands. cd uses chdir. If no
+arguments are present, change to $HOME. If too many arguments are present, the directory does not
+exist, or the directory is not a directory, signal an error. jobs is implemented using a jobs
+structure that decrements at the beginning of the loop by checking for finished background processes
+and increments when a background process is executed. If there are no active background processes,
+an error message is displayed. exit displays the last three valid commands using char * to save each
+command and overwrite the last. This waits for any background processes to finish running. If there
+are less than 3 valid commands, this prints the last one. If there are none, displays an error
+message.
+- **Assigned to**: Laura Obermaier
 
 ### Part 10: External Timeout Executable
-- **Responsibilities**: Implement the external executable/command "mytimeout" that can be executed in our shell. This command is analogous to the Unix command "timeout" and offers enhanced control over command execution duration. 
+- **Responsibilities**: Implement the external executable/command "mytimeout" that can be executed 
+in our shell. This command is analogous to the Unix command "timeout" and offers enhanced control 
+over command execution duration. 
 - **Assigned to**: Jeyma Rodriguez
 
-### Extra Credit
-- **Responsibilities**: [Description]
-- **Assigned to**: 
+### Extra Credit (#3)
+- **Responsibilities**: Implement ability to execute shell within a shell (nested instances)
+- **Assigned to**: Laura Obermaier
 
 ## File Listing
 ```
 shell/
 │
 ├── src/
-│ ├── main.c
-│ └── shell.c
+│ └── lexer.c
 │
 ├── include/
-│ └── shell.h
+│ └── lexer.h
 │
+├── .gitignore
 ├── README.md
 └── Makefile
 ```
 ## How to Compile & Execute
 
 ### Requirements
-- **Compiler**: e.g., `gcc` for C/C++, `rustc` for Rust.
-- **Dependencies**: List any libraries or frameworks necessary (rust only).
+- **Compiler**: `gcc`
 
 ### Compilation
-For a C/C++ example:
-```bash
 make
-```
-This will build the executable in ...
+
 ### Execution
-```bash
-make run
-```
-This will run the program ...
+.bin/shell, bin/shell, or make run
 
 ## Bugs
 - **Bug 1**: This is bug 1.
@@ -104,7 +109,8 @@ This will run the program ...
 ## Extra Credit
 - **Extra Credit 1**: [Extra Credit Option]
 - **Extra Credit 2**: [Extra Credit Option]
-- **Extra Credit 3**: [Extra Credit Option]
+- **Extra Credit 3**: Assigned to Laura Obermaier, allows for nested instances of a shell (allows
+users to execute the shell within the shell by running ./bin/shell or bin/shell)
 
 ## Considerations
 [Description]

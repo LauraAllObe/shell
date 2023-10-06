@@ -28,21 +28,21 @@ void execute_command(tokenlist* cmd, int input, int output) {
             dup2(input, STDIN_FILENO);
             close(input);
         }
-		//same as STDIN but with output instead
-        if (output != STDOUT_FILENO) 
-		{
-            dup2(output, STDOUT_FILENO);
-            close(output);
+		//Executes the command using get_full_path
+        char *fullPath = get_full_path(cmd);
+        if (fullPath) {
+            char *cmd_args[] = { cmd, NULL };
+            execv(fullPath, cmd_args);
+            free(fullPath);
+        } else {
+            perror("Command not found/not executable");
+            exit(EXIT_FAILURE);
         }
-		//execv replaces the current child process's image with the new process image specified by the command in fullPath
-        execv(cmd->items[0], cmd->items);
-        exit(EXIT_FAILURE);
     }
 }
 
 int main()
 {
-
 	//FOR PART 9 INTERNAL COMMAND EXECUTION JOBS, INITIALIZE JOB LIST JOB # TO 0
 	struct Job jobList[10];
 	for(int i = 0; i < 10; i++)
@@ -109,10 +109,7 @@ int main()
 			strncat(tempcmd, " ", strlen(" "));
 		}
 
-		if(tokens->size <= 0)
-			continue;
-
-		//ITERATE THROUGH TOKENS FOR ENVIRONMENT VARIABLE EXPANSION (PART 2)
+		//ITERATE THROUGH TOKENS FOR ENVIRONMENT VARIABLE EXPANSION (PT2)
 		for (int i = 0; i < tokens->size; i++)
 		{
 			//EXTRA CREDIT #3 (EXECUTE SHELL WITHIN SHELL), THIS EXPANDS BIN/SHELL AND
