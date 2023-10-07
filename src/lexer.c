@@ -9,77 +9,12 @@
 #include <stdlib.h>
 #include <fcntl.h>
 
-/*
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~OFFICE HOUR QUESTIONS (TO KEEP TRACK):~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-WHEN CD, DOES DIRECTORY GO IN PROMPT (ABSOLUTE WORKING DIRECTORY -> CURRENT WORKING DIRECTORY)?
-CAN OUR PROJECT STRUCTURE FEATURE A .GITIGNORE FILE?
-CAN WE HAVE LEXER.C AND LEXER.H INSTEAD OF SHELL.H, SHELL.C, AND MAIN.C?
-CHECK PROJECT STRUCTURE WITH TA
-
-
-*/
 //JOB STRUCTURE FOR jOBS INTERNAL COMMAND EXECUTION (PART 9)
 struct Job {
     int jobNumber;
     pid_t pid;
     char commandLine[512];
 };
-
-/*
-//function to return full path or null if not found(part 7)
-char* get_full_path(char *cmd)
-{
-	char *path = getenv("PATH");
-	if (!path) {
-    fprintf(stderr, "PATH environment variable not set.\n");
-    return NULL;
-}
-	char *pathCpy = strdup(path);
-	char *dir = strtok(pathCpy, ":");
-
-	while(dir != NULL)
-	{
-		char executable[512];
-		snprintf(executable, sizeof(executable), "%s/%s", dir, cmd);
-		if(access(executable, F_OK) == 0 && access(executable, X_OK) ==0)
-		{
-			free(pathCpy);
-			return strdup(executable);  //return executable path
-		}
-		dir = strtok(NULL, ":");
-	}
-	free(pathCpy);
-	return NULL; //command not found, return null
-}*/
-/*
-//function to execute command in a child process with path(part 7)
-void execute_cmd_with_path(char *cmd, int writePipe[2], int readPipe[2]) {
-    if (fork() == 0) { //creates child process using fork
-        if (writePipe) //If there's a write pipe, it duplicates its write end to standard output
-		{
-            dup2(writePipe[1], STDOUT_FILENO);
-            close(writePipe[0]);
-            close(writePipe[1]);
-        }
-
-        if (readPipe)  //If there's a read pipe, it duplicates its read end to standard input
-		{
-            dup2(readPipe[0], STDIN_FILENO);
-            close(readPipe[0]);
-            close(readPipe[1]);
-        }
-		//Executes the command using get_full_path
-        char *fullPath = get_full_path(cmd);
-        if (fullPath) {
-            char *cmd_args[] = { cmd, NULL };
-            execv(fullPath, cmd_args);
-            free(fullPath);
-        } else {
-            perror("Command not found/not executable");
-            exit(EXIT_FAILURE);
-        }
-    }
-}*/
 
 int main()
 {
@@ -99,21 +34,19 @@ int main()
 	char *tempcmd = (char *)malloc(sizeof(char *) * 200);
 
 	//PT6 RETAIN I/O & BOOL FLAG FOR IF DRAWING/SENDING FROM/TO FILE
-	int infd = dup(STDIN_FILENO);
-	int outfd = dup(STDOUT_FILENO);
 	bool isFileIn = 0;
 	bool isFileOut = 0;
 	int rediri = 0;//REDIRECT INPUT
 	int rediro = 0; //REDIRECT OUTPUT- SAVE VARIABLE FOR LATER USE
 
 	while (1) {
-
+		/*
 		if((isFileIn == 1) && (feof(stdin)))	//PT 6, SWITCH BACK CONTROL @ EOF
 		{
 			dup2(infd, STDIN_FILENO);			
 			close(rediri);
 			isFileIn = 0;
-		}
+		}*/
 
 		//DECREMENT BACKGROUND PROCCESSES WHEN COMPLETED FOR BACKGROUND PROCESSING (PART 8) AND
 		for(int i = 0; i < 10; i++)//JOBS INTERNAL COMMAND EXECUTION (PART 9)
@@ -378,6 +311,9 @@ int main()
 		}
 		printf("\n");
 
+		int infd = dup(STDIN_FILENO);
+		int outfd = dup(STDOUT_FILENO);
+
 		//PT6-I/O REDIRECTION
 		if(io1index > 0 && IO == true)
 		{
@@ -386,23 +322,50 @@ int main()
 			{
 				if(io2index > 0)
 				{		//MULTISTEP
-				
 					if(io2pointsleft == true)
 					{
+						close(STDIN_FILENO);
 						rediri = open(file3, O_RDONLY);
+						int status;
+						pid_t pid = fork();
+						if (pid == 0)
+						{
+							execv(commandTokens->items[0], commandTokens->items);
+						}
+						else {
+							waitpid(pid, &status, 0);
+						}
+
 						if(rediri == -1)
 						{
 							perror("The file requested does not exist or is not a regular file.");
 						} else
 						{
 							dup2(rediri, STDIN_FILENO);
+							close(rediri);
 							isFileIn = 1;
 							
 						}
 					}
 				}
+				close(STDOUT_FILENO);
 				rediro = open(file2, O_CREAT | O_RDWR | O_TRUNC, S_IRUSR | S_IWUSR); //important note: logical or (||) will cause the program to panic. Use (|) for flag seperation.
+				
+				if(io2index == 0)
+				{
+					int status;
+					pid_t pid = fork();
+					if (pid == 0)
+					{
+						execv(commandTokens->items[0], commandTokens->items);
+					}
+					else {
+						waitpid(pid, &status, 0);
+					}
+				}
+				
 				dup2(rediro, STDOUT_FILENO);
+				close(rediro);
 				isFileOut = 1;
 				
 			} //FILE IN
@@ -427,6 +390,16 @@ int main()
 					}
 				}
 			}
+			/*
+			int status;
+			pid_t pid = fork();
+			if (pid == 0)
+			{
+				execv(comd1->items[0], comd1->items);
+			}
+			else {
+				waitpid(pid, &status, 0);
+			}*/
 
 		}
 
