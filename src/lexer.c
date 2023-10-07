@@ -8,6 +8,9 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+//used for error checking
+bool error = false;
+
 //JOB STRUCTURE FOR jOBS INTERNAL COMMAND EXECUTION (PART 9)
 struct Job {
     int jobNumber;
@@ -15,34 +18,83 @@ struct Job {
     char commandLine[512];
 };
 
+//used for background execution
+int jobCount;
+int jobsRunning;
+struct Job jobList[10];
+
 //execute a given command with optional input and output redirection(part 7)
-void execute_command(tokenlist* cmd, int input, int output) {
+void execute_command(tokenlist* cmd, int input, int output, bool isBackground, char* tempcmd, bool 
+isLast) {
     //Variables to help in tokenizing the command and executing it
 	//creating child process using fork()
-   	if (fork() == 0) 
+	int status;
+	pid_t pid = fork();
+   	if (error == false && pid == 0) 
 	{
         /*If the input file descriptor isn't the standard input(STDIN_FILENO),
           the child process's standard input is redirected to input*/
-       if (input != STDIN_FILENO) 
+        if (input != STDIN_FILENO) 
 		{
             dup2(input, STDIN_FILENO);
             close(input);
         }
-
-		//execv replaces the current child process's image with the new process image specified by the command in fullPath
-        execv(cmd->items[0], cmd->items);
-        exit(EXIT_FAILURE);
+		//same as STDIN but with output instead
+        if (output != STDOUT_FILENO) 
+		{
+            dup2(output, STDOUT_FILENO);
+            close(output);
+        }
+		execv(cmd->items[0], cmd->items);
+        //exit(EXIT_FAILURE);
     }
+	if(error == false && isBackground && pid != 0 && isLast)
+	{
+		//INCREMENT COUNT AND ADD TO JOB STRUCTURE FOR JOBS INTERNAL COMMAND (PART 8)
+		jobCount++;//AND BACKGROUND EXECUTION (PART 9)
+		jobsRunning++;
+		printf("[%d] [%d]\n", jobCount, pid);
+		if(jobsRunning <= 10)
+		{
+			for(int i = 0; i < 10; i++)
+			{
+				if(jobList[i].jobNumber == 0)
+				{
+					jobList[i].jobNumber = jobCount;
+					jobList[i].pid = pid;
+					strncpy(jobList[i].commandLine, tempcmd, 
+					sizeof(jobList[i].commandLine));
+					break;
+				}
+			}
+		}
+		else
+		{
+			error = true;
+			printf("ERROR: maximum number of background jobs to display reached\n");
+		}
+	}
+	if(isBackground && pid != 0)
+	{
+		waitpid(pid, &status, WNOHANG);
+	}
 }
 
+
+//PROBLEMS:
+//FIRST COMMAND IS WONKY (PID IS THE JOB COUNT AND IT INCREMENTS?!)
+//HOW TO CHECK JOBS ALL THE TIME?
 int main()
-{
+{	
+	jobCount = 0;
+	jobsRunning = 0;
 	//FOR PART 9 INTERNAL COMMAND EXECUTION JOBS, INITIALIZE JOB LIST JOB # TO 0
-	struct Job jobList[10];
 	for(int i = 0; i < 10; i++)
+	{
 		jobList[i].jobNumber = 0;
-	int jobCount = 0;
-	int jobsRunning = 0;
+		jobList[i].pid = 0;
+		strncpy(jobList[i].commandLine, "", sizeof(jobList[i].commandLine));
+	}
 
 	//FOR PART 9 INTERNAL COMMAND EXECUTION EXIT, INITIALIZE PLACEHOLDERS AND 
 	int commandHistory = 0;//COUNTERS FOR THE THREE MOST RECENT COMMANDS
@@ -52,19 +104,6 @@ int main()
 	char *cmd2 = (char *)malloc(sizeof(char *) * 200);
 	char *tempcmd = (char *)malloc(sizeof(char *) * 200);
 	while (1) {
-		//DECREMENT BACKGROUND PROCCESSES WHEN COMPLETED FOR BACKGROUND PROCESSING (PART 8) AND
-		for(int i = 0; i < 10; i++)//JOBS INTERNAL COMMAND EXECUTION (PART 9)
-		{
-			pid_t pid = waitpid(jobList[i].pid, NULL, WNOHANG);
-			if(pid > 0)
-			{
-				jobList[i].jobNumber = 0;
-				jobsRunning--;
-				printf("\n[Job %d] done\n", pid);
-				printf("\n");
-			}
-		}
-
 		size_t size = 0;
 		size = pathconf(".", _PC_PATH_MAX);
 		//ENVIRONMENTAL VARIABLES FOR PROMPT (PART 1)
@@ -76,7 +115,6 @@ int main()
 
 		//VARIABLES TO BE USED FOR MOST ERROR MESSAGES
 		char *errorMessage;
-		bool error = false;
 
 		//PRINTS PROMPT
 		printf("%s@%s:%s",user,machine,pwd);
@@ -103,7 +141,10 @@ int main()
 			strncat(tempcmd, " ", strlen(" "));
 		}
 
-		//ITERATE THROUGH TOKENS FOR ENVIRONMENT VARIABLE EXPANSION (PT2)
+		if(tokens->size <= 0)
+			continue;
+
+		//ITERATE THROUGH TOKENS FOR ENVIRONMENT VARIABLE EXPANSION (PART 2)
 		for (int i = 0; i < tokens->size; i++)
 		{
 			//EXTRA CREDIT #3 (EXECUTE SHELL WITHIN SHELL), THIS EXPANDS BIN/SHELL AND
@@ -274,7 +315,7 @@ int main()
 				else {//INCREMENT COUNT AND ADD TO JOB STRUCTURE FOR JOBS INTERNAL COMMAND (PART 8)
 					jobCount++;//AND BACKGROUND EXECUTION (PART 9)
 					jobsRunning++;
-					printf("[%d] [%d]\n", jobCount, getpid());
+					printf("[%d] [%d]\n", jobCount, pid);
 					if(!error && (jobsRunning <= 10))
 					{
 						for(int i = 0; i < 10; i++)
@@ -282,7 +323,7 @@ int main()
 							if(jobList[i].jobNumber == 0)
 							{
 								jobList[i].jobNumber = jobCount;
-    							jobList[i].pid = getpid();
+    							jobList[i].pid = pid;
 								strncpy(jobList[i].commandLine, tempcmd, 
 								sizeof(jobList[i].commandLine));
 								break;
@@ -301,9 +342,9 @@ int main()
 			{
 				if(strcmp(tokens->items[0], "exit") == 0)//EXIT INTERNAL COMMAND (PART 9)
 				{
-					if(totalCommandHistory == 3)//IF 3, PRINT LAST 3 JOBS (NO ORDER)
+					if(totalCommandHistory >= 3)//IF 3, PRINT LAST 3 JOBS (NO ORDER)
 					{
-						printf("Last (%d) valid commands:\n", totalCommandHistory);
+						printf("Last (3) valid commands:\n");
 						printf("[1]: %s\n", cmd0);
 						printf("[2]: %s\n", cmd1);
 						printf("[3]: %s\n", cmd2);
@@ -347,10 +388,12 @@ int main()
 				}//JOBS INTERNAL COMMAND EXECUTION (PART 9)
 				else if(strcmp(tokens->items[0], "jobs") == 0)
 				{
-					for (int i = 1; i <= 10; i++) //PRINTS OUT ALL THE JOBS (IN STRUCTURE)
+					for (int i = 0; i < 10; i++) //PRINTS OUT ALL THE JOBS (IN STRUCTURE)
 					{
 						if(jobList[i].jobNumber > 0)
+						{
 							printf("[%d]+ %d %s\n", jobList[i].jobNumber, jobList[i].pid, jobList[i].commandLine);
+						}
 					}
 				}//PART 5 (NO PIPE OR IO)
 				else if(access(tokens->items[0], F_OK) == 0 && access(tokens->items[0], X_OK) == 0)
@@ -390,8 +433,17 @@ int main()
 				char command1[100] = "";
 				char command2[100] = "";
 				char command3[100] = "";
+
+				bool backgroundprocess= false;
+
 				for(int i = 0; i < tokens->size; i++)
 				{
+					//FOR BACKGROUND PROCESSES
+					if(i == tokens->size-1 && tokens->items[tokens->size -1][0] == '&')
+					{
+						backgroundprocess = true;
+						break;
+					}
 					if((i == pipe1index || i == pipe2index) && i != 0)
 						continue;
 					if(i < pipe1index && pipe1index != 0)
@@ -410,6 +462,7 @@ int main()
 						strcat(command3, tokens->items[i]);
 						strcat(command3, " ");
 					}
+
 				}
 
 				tokenlist *command1tokens = get_tokens(command1);
@@ -426,32 +479,37 @@ int main()
 				}
 
 				//Execute the first command
-				execute_command(command1tokens, STDIN_FILENO, pipe1[1]);
+				execute_command(command1tokens, STDIN_FILENO, pipe1[1], backgroundprocess, tempcmd,
+				false);//false because is not last command (for background exec)
 				close(pipe1[1]);
 
 				//If there's a third command, create another pipe and set up for the second command
 				if (pipe2index > 0) {//checks if pipe2index exists (there is a second pipe)
 					if (pipe(pipe2) == -1) {
-							perror("pipe2 failed");
-							exit(EXIT_FAILURE);
-				}
-				execute_command(command2tokens, pipe1[0], pipe2[1]);
-				close(pipe2[1]);
-				close(pipe1[0]);
+						perror("pipe2 failed");
+						exit(EXIT_FAILURE);
+					}
+					execute_command(command2tokens, pipe1[0], pipe2[1], backgroundprocess, tempcmd, 
+					false);//false because is not last command (for background exec)
+					close(pipe2[1]);
+					close(pipe1[0]);
 
-				//Execute the third command
-				execute_command(command3tokens, pipe2[0], STDOUT_FILENO);
-				close(pipe2[0]);
+					//Execute the third command
+					execute_command(command3tokens, pipe2[0], STDOUT_FILENO, 
+					backgroundprocess, tempcmd, true);//true because is last (for background exec)
+					close(pipe2[0]);
 				} else {
-				//If only two commands, directly set up for the second command
-				execute_command(command2tokens, pipe1[0], STDOUT_FILENO);
-				close(pipe1[0]);
+					//If only two commands, directly set up for the second command
+					execute_command(command2tokens, pipe1[0], STDOUT_FILENO, 
+					backgroundprocess, tempcmd, true);//true because is last (for background exec)
+					close(pipe1[0]);
 				}
-
-				wait(NULL);
-				wait(NULL);
-				if (pipe2index > 0) wait(NULL); //checks if pipe2index exists (there is a second pipe)
-				//end of part 7 
+				if(!backgroundprocess)
+				{
+					wait(NULL);
+					wait(NULL);
+					if (pipe2index > 0) wait(NULL); //checks if pipe2index exists (there is a second pipe)
+				}
 			}
 			else if(Pipe == false && IOorPipe == true)
 			{
@@ -485,6 +543,21 @@ int main()
 				strncat(cmd2, tempcmd, strlen(tempcmd));
 				commandHistory = 0;
 				totalCommandHistory++;
+			}
+		}
+
+		//DECREMENT BACKGROUND PROCCESSES WHEN COMPLETED FOR BACKGROUND PROCESSING (PART 8) AND
+		for(int i = 0; i < 10; i++)//JOBS INTERNAL COMMAND EXECUTION (PART 9)
+		{
+			pid_t pid = 0;
+			if(jobList[i].jobNumber > 0)
+				pid = waitpid(jobList[i].pid, NULL, WNOHANG);
+			if(pid > 0)
+			{
+				jobList[i].jobNumber = 0;
+				jobList[i].pid = 0;
+				jobsRunning--;
+				printf("[Job %d] + done [%s]\n", pid, jobList[i].commandLine);
 			}
 		}
 
