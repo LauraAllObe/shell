@@ -27,17 +27,28 @@ void execute_command(tokenlist* cmd, int input, int output) {
 		{
             dup2(input, STDIN_FILENO);
             close(input);
+//execute a given command with optional input and output redirection(part 7)
+void execute_command(tokenlist* cmd, int input, int output) {
+    //Variables to help in tokenizing the command and executing it
+	//creating child process using fork()
+   	if (fork() == 0) 
+	{
+        /*If the input file descriptor isn't the standard input(STDIN_FILENO),
+          the child process's standard input is redirected to input*/
+       if (input != STDIN_FILENO) 
+		{
+            dup2(input, STDIN_FILENO);
+            close(input);
         }
-		//Executes the command using get_full_path
-        char *fullPath = get_full_path(cmd);
-        if (fullPath) {
-            char *cmd_args[] = { cmd, NULL };
-            execv(fullPath, cmd_args);
-            free(fullPath);
-        } else {
-            perror("Command not found/not executable");
-            exit(EXIT_FAILURE);
+		//same as STDIN but with output instead
+        if (output != STDOUT_FILENO) 
+		{
+            dup2(output, STDOUT_FILENO);
+            close(output);
         }
+		//execv replaces the current child process's image with the new process image specified by the command in fullPath
+        execv(cmd->items[0], cmd->items);
+        exit(EXIT_FAILURE);
     }
 }
 
@@ -245,6 +256,7 @@ int main()
 		}
 		else
 		{
+			
 			//SEPERATE CASES FOR IOREDIRECT, PIPING, BACKGROUND, EXTERNAL, AND INTERNAL COMMANDS EX
 			int IOorPipe = false;//TO KNOW WHEN TO EXECUTE BACKGORUND, EXTERNAL, AND INTERNAL
 			int Pipe = false;//TO KNOW WHEN TO EXECUTE PIPING VERSUS IO REDIRECT
@@ -253,6 +265,8 @@ int main()
 				if(strcmp(tokens->items[i], "|") == 0 || strcmp(tokens->items[i], ">") == 0
 				|| strcmp(tokens->items[i], "<") == 0)
 					IOorPipe = true;
+				if(strcmp(tokens->items[i], "|") == 0)
+					Pipe = true;
 				if(strcmp(tokens->items[i], "|") == 0)
 					Pipe = true;
 			}
@@ -388,9 +402,6 @@ int main()
 					else if (strcmp(tokens->items[i], "|") == 0 && pipe2index == 0)
 						pipe2index = i;
 				}
-				//TESTING
-				printf("pipe 1 index:%d\n", pipe1index);
-				printf("pipe 2 index:%d\n", pipe2index);
 
 				//iterate through all tokens and allocate each command (seperated by pipes)
 				char command1[100] = "";
@@ -417,31 +428,10 @@ int main()
 						strcat(command3, " ");
 					}
 				}
-				//TESTING
-				printf("command1: %s\n", command1);
-				printf("command2: %s\n", command2);
-				printf("command3: %s\n", command3);
 
 				tokenlist *command1tokens = get_tokens(command1);
 				tokenlist *command2tokens = get_tokens(command2);
 				tokenlist *command3tokens = get_tokens(command3);
-
-				//TESTING
-				for(int i = 0; i < command1tokens->size; i++)
-				{
-					printf("command1tokens: %s ", command1tokens->items[i]);
-				}
-				printf("\n");
-				for(int i = 0; i < command2tokens->size; i++)
-				{
-					printf("command2tokens: %s ", command2tokens->items[i]);
-				}
-				printf("\n");
-				for(int i = 0; i < command3tokens->size; i++)
-				{
-					printf("command3tokens: %s ", command3tokens->items[i]);
-				}
-				printf("\n");
 
 				//PART 7 PIPING
 				//new part 7 test
