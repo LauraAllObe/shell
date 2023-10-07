@@ -15,6 +15,9 @@ LDFLAGS :=
 
 all: $(EXEC)
 
+bin/mytimeout: src/mytimeout/mytimeout.c 
+	gcc -g -Wall -std=c99 -o bin/mytimeout src/mytimeout/mytimeout.c
+
 $(EXEC): $(OBJS)
 	$(CC) $(CFLAGS) $(OBJS) -o $(EXEC)
 
