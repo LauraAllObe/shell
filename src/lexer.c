@@ -27,25 +27,8 @@ void execute_command(tokenlist* cmd, int input, int output) {
 		{
             dup2(input, STDIN_FILENO);
             close(input);
-//execute a given command with optional input and output redirection(part 7)
-void execute_command(tokenlist* cmd, int input, int output) {
-    //Variables to help in tokenizing the command and executing it
-	//creating child process using fork()
-   	if (fork() == 0) 
-	{
-        /*If the input file descriptor isn't the standard input(STDIN_FILENO),
-          the child process's standard input is redirected to input*/
-       if (input != STDIN_FILENO) 
-		{
-            dup2(input, STDIN_FILENO);
-            close(input);
         }
-		//same as STDIN but with output instead
-        if (output != STDOUT_FILENO) 
-		{
-            dup2(output, STDOUT_FILENO);
-            close(output);
-        }
+
 		//execv replaces the current child process's image with the new process image specified by the command in fullPath
         execv(cmd->items[0], cmd->items);
         exit(EXIT_FAILURE);
