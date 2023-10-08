@@ -311,8 +311,8 @@ int main()
 		}
 		printf("\n");
 
-		int infd = dup(STDIN_FILENO);
-		int outfd = dup(STDOUT_FILENO);
+		int infd;
+		int outfd;
 
 		//PT6-I/O REDIRECTION
 		if(io1index > 0 && IO == true)
@@ -324,34 +324,21 @@ int main()
 				{		//MULTISTEP
 					if(io2pointsleft == true)
 					{
+						infd = dup(STDIN_FILENO);
 						close(STDIN_FILENO);
 						rediri = open(file3, O_RDONLY);
-						int status;
-						pid_t pid = fork();
-						if (pid == 0)
-						{
-							execv(commandTokens->items[0], commandTokens->items);
-						}
-						else {
-							waitpid(pid, &status, 0);
-						}
-
 						if(rediri == -1)
 						{
 							perror("The file requested does not exist or is not a regular file.");
-						} else
-						{
-							dup2(rediri, STDIN_FILENO);
-							close(rediri);
-							isFileIn = 1;
-							
+							break;
 						}
 					}
 				}
+				outfd = dup(STDOUT_FILENO);
 				close(STDOUT_FILENO);
 				rediro = open(file2, O_CREAT | O_RDWR | O_TRUNC, S_IRUSR | S_IWUSR); //important note: logical or (||) will cause the program to panic. Use (|) for flag seperation.
 				
-				if(io2index == 0)
+				if(rediri != -1)
 				{
 					int status;
 					pid_t pid = fork();
@@ -364,42 +351,64 @@ int main()
 					}
 				}
 				
-				dup2(rediro, STDOUT_FILENO);
-				close(rediro);
+				if(io2index > 0 && io2pointsleft == true)
+				{
+					dup2(infd, STDIN_FILENO);
+					close(infd);
+					isFileIn = 1;
+				}
+				dup2(outfd, STDOUT_FILENO);
+				close(outfd);
 				isFileOut = 1;
 				
 			} //FILE IN
 			else if(io1pointsleft == true)
 			{
+				infd = dup(STDIN_FILENO);
+				close(STDIN_FILENO);
 				rediri = open(file2, O_RDONLY);
 				if(rediri == -1)
 				{
 					perror("The file requested does not exist or is not a regular file.");
-				} else
-				{
-					dup2(rediri, STDIN_FILENO);
-					isFileIn = 1;
+					break;
 				}
 				if(io2index > 0)
 				{		//MULTISTEP
 					if(io2pointsleft == true)
 					{
+						outfd = dup(STDOUT_FILENO);
+						close(STDOUT_FILENO);
 						rediro = open(file3, O_CREAT | O_RDWR | O_TRUNC, S_IRUSR | S_IWUSR);
+					}
+				}
+
+				if(rediri != -1)
+				{
+					int status;
+					pid_t pid = fork();
+					if (pid == 0)
+					{
+						execv(commandTokens->items[0], commandTokens->items);
+					}
+					else {
+						waitpid(pid, &status, 0);
+					}
+				}
+
+				dup2(rediri, STDIN_FILENO);
+				close(rediri);
+				isFileIn = 1;
+
+				if(io2index > 0)
+				{		//MULTISTEP
+					if(io2pointsleft == true)
+					{
 						dup2(rediro, STDOUT_FILENO);
+						close(rediro);
 						isFileOut = 1;
 					}
 				}
 			}
-			/*
-			int status;
-			pid_t pid = fork();
-			if (pid == 0)
-			{
-				execv(comd1->items[0], comd1->items);
-			}
-			else {
-				waitpid(pid, &status, 0);
-			}*/
 
 		}
 
