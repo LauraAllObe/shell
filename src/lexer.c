@@ -7,6 +7,7 @@
 #include "lexer.h"
 #include <stdio.h>
 #include <stdlib.h>
+#include <fcntl.h>
 
 //used for error checking
 bool error = false;
@@ -80,10 +81,6 @@ isLast) {
 	}
 }
 
-
-//PROBLEMS:
-//FIRST COMMAND IS WONKY (PID IS THE JOB COUNT AND IT INCREMENTS?!)
-//HOW TO CHECK JOBS ALL THE TIME?
 int main()
 {	
 	jobCount = 0;
@@ -103,6 +100,9 @@ int main()
 	char *cmd1 = (char *)malloc(sizeof(char *) * 200);
 	char *cmd2 = (char *)malloc(sizeof(char *) * 200);
 	char *tempcmd = (char *)malloc(sizeof(char *) * 200);
+
+	int rediri = 0;
+	int rediro = 0;
 	while (1) {
 		size_t size = 0;
 		size = pathconf(".", _PC_PATH_MAX);
@@ -160,7 +160,6 @@ int main()
 			if(tokens->items[i][0]=='$')
 			{				
 				char variable[50];
-				//printf("%s", tokens->items[i]);
 				strncpy(variable, tokens->items[i] + 1, strlen(tokens->items[i]));
 				variable[strlen(variable)] = '\0';
 
@@ -261,10 +260,7 @@ int main()
 						strlen(executable) + 1);
                         strcpy(tokens->items[i], executable);
                         strcpy(tokens->items[i], executable);
-                        //printf("~~New token:%s\n",tokens->items[i]);
 						strcpy(tokens->items[i], executable);
-                        //printf("~~New token:%s\n",tokens->items[i]);
-						//isExecutable = true;
 						break;	
 					}
 					token = strtok(NULL, ":");
@@ -392,7 +388,8 @@ int main()
 					{
 						if(jobList[i].jobNumber > 0)
 						{
-							printf("[%d]+ %d %s\n", jobList[i].jobNumber, jobList[i].pid, jobList[i].commandLine);
+							printf("[%d]+ %d %s\n", jobList[i].jobNumber, jobList[i].pid, 
+							jobList[i].commandLine);
 						}
 					}
 				}//PART 5 (NO PIPE OR IO)
@@ -451,8 +448,8 @@ int main()
 						strcat(command1, tokens->items[i]);
 						strcat(command1, " ");
 					}
-					else if((i < pipe2index && pipe2index != 0)|| (i < tokens->size && pipe1index != 0 
-					&& pipe2index == 0))
+					else if((i < pipe2index && pipe2index != 0)|| 
+					(i < tokens->size && pipe1index != 0 && pipe2index == 0))
 					{
 						strcat(command2, tokens->items[i]);
 						strcat(command2, " ");
@@ -557,12 +554,6 @@ int main()
 					background = true;
 				}
 		
-				//TESTING
-				//printf("io 1 index:%d\n", io1index);
-				//printf("io 2 index:%d\n", io2index);
-				//printf("io 1 is < (points left) is %d (1 = true/<, 0 = false/>)\n", io1pointsleft);
-				//printf("io 2 is < (points left) is %d (1 = true/<, 0 = false/>)\n", io2pointsleft);
-		
 				//iterate through all tokens and allocate each command (seperated by IO redirects)
 				//THIS HOLDS THE VALUE OF THE COMMAND, "" IF NONE
 				char comd1[100] = "";
@@ -593,24 +584,11 @@ int main()
 						strcat(file3, " ");
 					}
 				}
-				//TESTING
-				//printf("comd1: %s\n", comd1);
-				//printf("file2: %s\n", file2);
-				//printf("file3: %s\n", file3);
 		
 				tokenlist *commandTokens = get_tokens(comd1);
-				/*
-				//TESTING
-				for(int i = 0; i < commandTokens->size; i++)
-				{
-					printf("command1tokens: %s ", commandTokens->items[i]);
-				}
-				printf("\n");
-		
 				int infd;
 				int outfd;
-				*/
-		
+				
 				//PT6-I/O REDIRECTION
 				if(io1index > 0 && IO == true)
 				{
@@ -626,14 +604,14 @@ int main()
 								rediri = open(file3, O_RDONLY);
 								if(rediri == -1)
 								{
-									perror("The file requested does not exist or is not a regular file.");
+									perror("The file requested does not exist or is not regular.");
 									break;
 								}
 							}
 						}
 						outfd = dup(STDOUT_FILENO);
 						close(STDOUT_FILENO);
-						rediro = open(file2, O_CREAT | O_RDWR | O_TRUNC, S_IRUSR | S_IWUSR); //important note: logical or (||) will cause the program to panic. Use (|) for flag seperation.
+						rediro = open(file2, O_CREAT | O_RDWR | O_TRUNC, S_IRUSR | S_IWUSR);
 						
 						int status;
 						pid_t pid = fork();
@@ -660,7 +638,7 @@ int main()
 									error = true;
 								}
 							}
-							else {//INCREMENT COUNT AND ADD TO JOB STRUCTURE FOR JOBS INTERNAL COMMAND (PART 8)
+							else {//INCREMENT COUNT AND ADD TO JOB STRUCTURE FOR JOBS (PART 8)
 								jobCount++;//AND BACKGROUND EXECUTION (PART 9)
 								jobsRunning++;
 								if(!error && (jobsRunning <= 10))
@@ -680,7 +658,7 @@ int main()
 								else if(jobsRunning > 10)
 								{
 									error = true;
-									perror("ERROR: maximum number of background jobs to display reached\n");
+									perror("ERROR: maximum number of jobs to display reached\n");
 								}
 								waitpid(pid, &status, WNOHANG);
 							}
@@ -690,11 +668,9 @@ int main()
 						{
 							dup2(infd, STDIN_FILENO);
 							close(infd);
-							isFileIn = 1;
 						}
 						dup2(outfd, STDOUT_FILENO);
 						close(outfd);
-						isFileOut = 1;
 						if(background)
 							printf("[%d] [%d]\n", jobCount, pid);
 					} //FILE IN
@@ -705,7 +681,7 @@ int main()
 						rediri = open(file2, O_RDONLY);
 						if(rediri == -1)
 						{
-							perror("The file requested does not exist or is not a regular file.");
+							perror("The file requested does not exist or is not regular.");
 							break;
 						}
 		
@@ -744,7 +720,7 @@ int main()
 									error = true;
 								}
 							}
-							else {//INCREMENT COUNT AND ADD TO JOB STRUCTURE FOR JOBS INTERNAL COMMAND (PART 8)
+							else {//INCREMENT COUNT AND ADD TO JOB STRUCTURE FOR JOBS (PART 8)
 								jobCount++;//AND BACKGROUND EXECUTION (PART 9)
 								jobsRunning++;
 								if(!error && (jobsRunning <= 10))
@@ -764,7 +740,7 @@ int main()
 								else if(jobsRunning > 10)
 								{
 									error = true;
-									perror("ERROR: maximum number of background jobs to display reached\n");
+									perror("ERROR: maximum number of jobs to display reached\n");
 								}
 								waitpid(pid, &status, WNOHANG);
 							}
@@ -772,7 +748,6 @@ int main()
 		
 						dup2(infd, STDIN_FILENO);
 		                close(infd);
-		                isFileIn = 1;
 		
 		                if(io2index > 0)
 		                {        //MULTISTEP
@@ -780,16 +755,13 @@ int main()
 		                    {
 		                        dup2(outfd, STDOUT_FILENO);
 		                        close(outfd);
-		                        isFileOut = 1;
 		                    }
 		                }
 		
 						if(background)
 							printf("[%d] [%d]\n", jobCount, pid);
 					}
-		
 				}
-
 			}
 		}
 
