@@ -513,7 +513,283 @@ int main()
 			}
 			else if(Pipe == false && IOorPipe == true)
 			{
-				//IO REDIRECTION
+				//PARSING COMMANDS FOR FUTURE IO REDIRECTION
+				//THIS INDICATES THE INDEX LOCATION OF THE FIRST < OR > SYMBOL
+				int io1index = 0;//IF GREATER THAN 0, IT IS TRUE THAT IO REDIRECTION IS TAKING PLACE
+				//THIS INDICATES THE INDEX LOCATION OF THE SECOND < OR > SYMBOL
+				int io2index = 0;//IF GREATER THAN 0, IT IS TRUE THAT TWO IO REDIRECTIONS ARE TAKING PLACE
+				//IF TRUE, THIS INDICATES THAT IO REDIRECTION #1 IS <, > IF FALSE
+				bool io1pointsleft = false;
+				//IF TRUE, THIS INDICATES THAT IO REDIRECTION #2 IS <, > IF FALSE
+				bool io2pointsleft = false;
+				//ALL OF THE ABOVE VALUES CAN BE USED FOR CASE CHECKING!!
+				bool IO = false;
+				for(int i = 0; i < tokens->size; i++)
+				{
+					if(strcmp(tokens->items[i], "<") == 0 &&  io1index == 0)
+					{
+						IO = true;
+						io1index = i;
+						io1pointsleft = true;
+					}
+					else if(strcmp(tokens->items[i], ">") == 0 &&  io1index == 0)
+					{
+						IO = true;
+						io1index = i;
+					}
+					else if (strcmp(tokens->items[i], "<") == 0 && io2index == 0)
+					{
+						IO = true;
+						io2index = i;
+						io2pointsleft = true;
+					}
+					else if (strcmp(tokens->items[i], ">") == 0 && io2index == 0)
+					{
+						IO = true;
+						io2index = i;
+					}
+				}
+		
+				//check if background process (FOR IO Redirection)
+				bool background;
+				if(strcmp(tokens->items[tokens->size-1], "&") == 0 && IO == true)
+				{
+					background = true;
+				}
+		
+				//TESTING
+				//printf("io 1 index:%d\n", io1index);
+				//printf("io 2 index:%d\n", io2index);
+				//printf("io 1 is < (points left) is %d (1 = true/<, 0 = false/>)\n", io1pointsleft);
+				//printf("io 2 is < (points left) is %d (1 = true/<, 0 = false/>)\n", io2pointsleft);
+		
+				//iterate through all tokens and allocate each command (seperated by IO redirects)
+				//THIS HOLDS THE VALUE OF THE COMMAND, "" IF NONE
+				char comd1[100] = "";
+				//THIS HOLDS THE VALUE OF THE FIRST FILE, "" IF NONE
+				char file2[100] = "";
+				//THIS HOLDS THE VALUE OF THE SECOND FILE, "" IF NONE
+				char file3[100] = "";
+				for(int i = 0; i < tokens->size; i++)
+				{
+					if(i == tokens->size - 1 && background)
+						break;
+					if((i == io1index || i == io2index) && i != 0)
+						continue;
+					if(i < io1index && io1index != 0)
+					{
+						strcat(comd1, tokens->items[i]);
+						strcat(comd1, " ");
+					}
+					else if((i < io2index && io2index != 0)|| (i < tokens->size && io1index != 0 
+					&& io2index == 0))
+					{
+						strcat(file2, tokens->items[i]);
+						strcat(file2, " ");
+					}
+					else if(io2index != 0)
+					{
+						strcat(file3, tokens->items[i]);
+						strcat(file3, " ");
+					}
+				}
+				//TESTING
+				//printf("comd1: %s\n", comd1);
+				//printf("file2: %s\n", file2);
+				//printf("file3: %s\n", file3);
+		
+				tokenlist *commandTokens = get_tokens(comd1);
+				/*
+				//TESTING
+				for(int i = 0; i < commandTokens->size; i++)
+				{
+					printf("command1tokens: %s ", commandTokens->items[i]);
+				}
+				printf("\n");
+		
+				int infd;
+				int outfd;
+				*/
+		
+				//PT6-I/O REDIRECTION
+				if(io1index > 0 && IO == true)
+				{
+					//FILE OUT
+					if(io1pointsleft == false)
+					{
+						if(io2index > 0)
+						{		//MULTISTEP
+							if(io2pointsleft == true)
+							{
+								infd = dup(STDIN_FILENO);
+								close(STDIN_FILENO);
+								rediri = open(file3, O_RDONLY);
+								if(rediri == -1)
+								{
+									perror("The file requested does not exist or is not a regular file.");
+									break;
+								}
+							}
+						}
+						outfd = dup(STDOUT_FILENO);
+						close(STDOUT_FILENO);
+						rediro = open(file2, O_CREAT | O_RDWR | O_TRUNC, S_IRUSR | S_IWUSR); //important note: logical or (||) will cause the program to panic. Use (|) for flag seperation.
+						
+						int status;
+						pid_t pid = fork();
+						if(rediri != -1 && background == false)
+						{
+							if (pid == 0)
+							{
+								execv(commandTokens->items[0], commandTokens->items);
+							}
+							else {
+								waitpid(pid, &status, 0);
+							}
+						}
+						else if(rediri != -1 && background == true)
+						{
+							if(pid == 0) {
+								if (access(commandTokens->items[0], X_OK) == 0)
+								{
+									execv(commandTokens->items[0], commandTokens->items);
+								}
+								else
+								{
+									perror("ERROR: Command not found or not executable.\n");
+									error = true;
+								}
+							}
+							else {//INCREMENT COUNT AND ADD TO JOB STRUCTURE FOR JOBS INTERNAL COMMAND (PART 8)
+								jobCount++;//AND BACKGROUND EXECUTION (PART 9)
+								jobsRunning++;
+								if(!error && (jobsRunning <= 10))
+								{
+									for(int i = 0; i < 10; i++)
+									{
+										if(jobList[i].jobNumber == 0)
+										{
+											jobList[i].jobNumber = jobCount;
+											jobList[i].pid = pid;
+											strncpy(jobList[i].commandLine, tempcmd, 
+											sizeof(jobList[i].commandLine));
+											break;
+										}
+									}
+								}
+								else if(jobsRunning > 10)
+								{
+									error = true;
+									perror("ERROR: maximum number of background jobs to display reached\n");
+								}
+								waitpid(pid, &status, WNOHANG);
+							}
+						}
+						
+						if(io2index > 0 && io2pointsleft == true)
+						{
+							dup2(infd, STDIN_FILENO);
+							close(infd);
+							isFileIn = 1;
+						}
+						dup2(outfd, STDOUT_FILENO);
+						close(outfd);
+						isFileOut = 1;
+						if(background)
+							printf("[%d] [%d]\n", jobCount, pid);
+					} //FILE IN
+					else if(io1pointsleft == true)
+					{
+						infd = dup(STDIN_FILENO);
+						close(STDIN_FILENO);
+						rediri = open(file2, O_RDONLY);
+						if(rediri == -1)
+						{
+							perror("The file requested does not exist or is not a regular file.");
+							break;
+						}
+		
+						if(io2index > 0)
+						{		//MULTISTEP
+							if(io2pointsleft == false)
+							{
+								outfd = dup(STDOUT_FILENO);
+								close(STDOUT_FILENO);
+								rediro = open(file3, O_CREAT | O_RDWR | O_TRUNC, S_IRUSR | S_IWUSR);
+							}
+						}
+		
+						int status;
+						pid_t pid = fork();
+						if(rediri != -1 && background == false)
+						{
+							if (pid == 0)
+							{
+								execv(commandTokens->items[0], commandTokens->items);
+							}
+							else {
+								waitpid(pid, &status, 0);
+							}
+						}
+						else if(rediri != -1 && background == true)
+						{
+							if(pid == 0) {
+								if (access(commandTokens->items[0], X_OK) == 0)
+								{
+									execv(commandTokens->items[0], commandTokens->items);
+								}
+								else
+								{
+									perror("ERROR: Command not found or not executable.\n");
+									error = true;
+								}
+							}
+							else {//INCREMENT COUNT AND ADD TO JOB STRUCTURE FOR JOBS INTERNAL COMMAND (PART 8)
+								jobCount++;//AND BACKGROUND EXECUTION (PART 9)
+								jobsRunning++;
+								if(!error && (jobsRunning <= 10))
+								{
+									for(int i = 0; i < 10; i++)
+									{
+										if(jobList[i].jobNumber == 0)
+										{
+											jobList[i].jobNumber = jobCount;
+											jobList[i].pid = pid;
+											strncpy(jobList[i].commandLine, tempcmd, 
+											sizeof(jobList[i].commandLine));
+											break;
+										}
+									}
+								}
+								else if(jobsRunning > 10)
+								{
+									error = true;
+									perror("ERROR: maximum number of background jobs to display reached\n");
+								}
+								waitpid(pid, &status, WNOHANG);
+							}
+						}
+		
+						dup2(infd, STDIN_FILENO);
+		                close(infd);
+		                isFileIn = 1;
+		
+		                if(io2index > 0)
+		                {        //MULTISTEP
+		                    if(io2pointsleft == false)
+		                    {
+		                        dup2(outfd, STDOUT_FILENO);
+		                        close(outfd);
+		                        isFileOut = 1;
+		                    }
+		                }
+		
+						if(background)
+							printf("[%d] [%d]\n", jobCount, pid);
+					}
+		
+				}
+
 			}
 		}
 
