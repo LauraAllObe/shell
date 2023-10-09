@@ -46,7 +46,7 @@ assignees of part 6 and part 7.
 - **Assigned to**: Autumn Harp, Laura Obermaier
 
 ### Part 7: Piping
-- **Responsibilities**: [Description]
+- **Responsibilities**: It handles a maximum of two pipes in any given command. Piping behavior follows the required project desription: <cmd1 | cmd2>,  <cmd1 | cmd2 | cmd3>. By adding a piping feature, we let data move easily between commands. This makes the computer's command tool more flexible and strong.
 - **Assigned to**: Jeyma Rodriguez
 
 ### Part 8: Background Processing
