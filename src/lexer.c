@@ -40,46 +40,6 @@ void execute_command(tokenlist* cmd, int input, int output) {
     }
 }
 
-/*
-//part 10
-void execute_mytimeout(tokenlist *tokens)
-{
-	if(tokens->size < 3)
-	{
-	    fprintf(stderr, "Usage: mytimeout [snds] [cmd] [cmd-args].\n");
-		return;
-	}
-
-	int duration = atoi(tokens->items[1]); //assumes the second item is the timeout value in seconds.
-	child_pid = fork(); //create child process
-	if (child_pid == -1) {
-        perror("fork");
-        exit(EXIT_FAILURE);
-    }
-	if(child_pid == 0)
-	{
-		tokenlist *new_tokens;
-		for(int i = 2; i < tokens->size; i++)
-		{
-			if(strcmp(tokens->items[0], "./mytimeout") == 0);
-				add_token(new_tokens, tokens->items[i]);
-		}
-		new_tokens->items[new_tokens->size] = NULL;  // Null-terminate the new token list for execv
-		
-		execv(new_tokens->items[0], new_tokens->items);
-
-		//execv(fullPath, &tokens->items[2]); // Pass the remaining arguments to execv
-
-		// Only reached if exec fails
-        perror("exec");
-        exit(EXIT_FAILURE);
-    } else {
-        signal(SIGALRM, alarm_handler);
-        alarm(duration);
-        wait(NULL);
-    }
-}*/
-
 int main()
 {
 	
@@ -101,8 +61,10 @@ int main()
 		//DECREMENT BACKGROUND PROCCESSES WHEN COMPLETED FOR BACKGROUND PROCESSING (PART 8) AND
 		for(int i = 0; i < 10; i++)//JOBS INTERNAL COMMAND EXECUTION (PART 9)
 		{
-			pid_t pid = waitpid(jobList[i].pid, NULL, WNOHANG);
-			if(pid > 0)
+			pid_t pid = 0;
+			if(jobList[i].pid > 0)
+				pid = waitpid(jobList[i].pid, NULL, WNOHANG);
+			if(jobList[i].pid > 0 && pid > 0)
 			{
 				jobList[i].jobNumber = 0;
 				jobsRunning--;
@@ -148,7 +110,6 @@ int main()
 			strncat(tempcmd, tokens->items[i], strlen(tokens->items[i]));
 			strncat(tempcmd, " ", strlen(" "));
 		}
-
 		//ITERATE THROUGH TOKENS FOR ENVIRONMENT VARIABLE EXPANSION (PART 2)
 		for (int i = 0; i < tokens->size; i++)
 		{
@@ -156,9 +117,23 @@ int main()
 			//FOR part 10 (mytimeout)
 			if(strcmp(tokens->items[i], "./mytimeout") == 0)
 			{
-				tokens->items[0] = (char *)realloc(tokens->items[0], strlen(pwd) + 1);
+				char* myTimeout = "/bin/mytimeout";
+				tokens->items[i] = (char *)realloc(tokens->items[i], strlen(pwd) + 1 
+				+ strlen(myTimeout));
+				strncpy(tokens->items[i], pwd, strlen(pwd));
+				strcat(tokens->items[i], myTimeout);
+				wantToExpand = false;
+			}
+
+			//EXTRA CREDIT #3 (EXECUTE SHELL WITHIN SHELL), THIS EXPANDS BIN/SHELL AND
+			if(strcmp(tokens->items[i], "./bin/shell") == 0 //./BIN/SHELL TO FULL PATH
+			|| strcmp(tokens->items[i], "bin/shell") == 0 )
+			{
+				char* shell = "/bin/shell";
+				tokens->items[0] = (char *)realloc(tokens->items[0], strlen(pwd) + 1 
+				+ strlen(shell));
 				strncpy(tokens->items[0], pwd, strlen(pwd));
-				strcat(tokens->items[0], "/bin/mytimeout");
+				strcat(tokens->items[0], shell);
 				wantToExpand = false;
 			}
 
@@ -198,16 +173,18 @@ int main()
 				{
 					//Assign space for the expanded path
 					//using malloc() to allocate the requested memory and return pointer to it
-					char *expandedPath = (char *)malloc(strlen(home) 
-					+ strlen(tokens->items[i]) + 1);
+					char *expandedPath;
+					expandedPath = (char *)malloc(strlen(home) + strlen(tokens->items[i]) + 1);
 					//creating expanded path
 					strcpy(expandedPath, home);
 					strcat(expandedPath, tokens->items[i] + 1);
 
+					tokens->items[i] = (char *)realloc(tokens->items[i], 
+					strlen(expandedPath) + 1);
+					strcpy(tokens->items[i], expandedPath);
 					//using free() to deallocates tokens previous memory
-					free(tokens->items[i]);
 					//Updating tokens with expanded path
-					tokens->items[i] = expandedPath;
+					free(expandedPath);
 				}
 				else  //Show error message if $HOME is not set
 				{
