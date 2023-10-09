@@ -1,8 +1,12 @@
 [![Review Assignment Due Date](https://classroom.github.com/assets/deadline-readme-button-24ddc0f5d75046c5622901739e7c5dd533143b0c8e959d652212380cedb1ea36.svg)]
 (https://classroom.github.com/a/wtw9xmrw)
 # Shell
-
-[Description]
+This project is centered around the development of a custom shell interface. The primary objective is to create a sophisticated command-line environment that allows users to interact seamlessly with the underlying system.
+Key Features and Goals:
+-Efficient command execution: Ensuring commands run smoothly and effectively.
+-Advanced error handling: Minimizing user errors and enhancing system response.
+-Intuitive user interaction: Creating a user-friendly environment with clear feedback and instruction.
+-Integration of common shell features: Including but not limited to input/output redirection, piping, and background processing.
 
 ## Group Members
 - **Jeyma Rodrìguez**: jdr21@fsu.edu
