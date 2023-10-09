@@ -104,6 +104,7 @@ int main()
 	int rediri = 0;
 	int rediro = 0;
 	while (1) {
+		error = false;
 		size_t size = 0;
 		size = pathconf(".", _PC_PATH_MAX);
 		//ENVIRONMENTAL VARIABLES FOR PROMPT (PART 1)
@@ -113,8 +114,6 @@ int main()
 		if ((pwd = (char *)malloc((size_t)size)) != NULL) 
         	getcwd(pwd, (size_t)size);
 
-		//VARIABLES TO BE USED FOR MOST ERROR MESSAGES
-		char *errorMessage;
 
 		//PRINTS PROMPT
 		printf("%s@%s:%s",user,machine,pwd);
@@ -147,6 +146,7 @@ int main()
 		//ITERATE THROUGH TOKENS FOR ENVIRONMENT VARIABLE EXPANSION (PART 2)
 		for (int i = 0; i < tokens->size; i++)
 		{
+			
 			//EXTRA CREDIT #3 (EXECUTE SHELL WITHIN SHELL), THIS EXPANDS BIN/SHELL AND
 			if(strcmp(tokens->items[i], "./bin/shell") == 0 //./BIN/SHELL TO FULL PATH
 			|| strcmp(tokens->items[i], "bin/shell") == 0 )
@@ -168,7 +168,7 @@ int main()
 				//ERROR CHECKING FOR BAD ENVIRONMENTAL VARIABLE
 				if(envvar == NULL)
 				{
-					errorMessage = "ERROR: BAD ENVIRONMENTAL VARIABLE";
+					printf("ERROR: BAD ENVIRONMENTAL VARIABLE\n");
 					error = true;
 				}
 				else
@@ -204,10 +204,15 @@ int main()
 				}
 				else  //Show error message if $HOME is not set
 				{
-					errorMessage = 
-					"ERROR: Tilde expansion failed HOME environment variable is not set.\n";
+					printf("ERROR: Tilde expansion failed HOME environment variable is not set.\n");
 					error = true;
 				}
+			}
+			else if(tokens->items[i][0] == '~' && !(tokens->items[i][1] == '\0' 
+			|| tokens->items[i][1] == '/'))
+			{
+				printf("ERROR: Tilde expansion failed (not standalone or ~/).\n");
+				error = true;
 			}
 
 			//PATH SEARCH (PART 4)
@@ -239,8 +244,8 @@ int main()
 				wantToExpand = true;
 			else if(i != 0 && strcmp(tokens->items[i-1],"|") != 0)
 				wantToExpand = false;
-				
-			//IF THE TOKEN IS NOT ALREADY AN EXECUTABLE PATH AND WE WANT TO EXPAND,
+							
+						//IF THE TOKEN IS NOT ALREADY AN EXECUTABLE PATH AND WE WANT TO EXPAND,
 			//THEN DO PATH SEARCH (PT4) AND EXPAND EACH COMMAND
 			if((access(tokens->items[i], F_OK) != 0 || access(tokens->items[i], X_OK) != 0)
 			&& wantToExpand == true)
@@ -268,13 +273,7 @@ int main()
 			}
 		}
 
-		//THIS IS WHERE PREVIOUSLY INITIALIZED ERROR MESSAGES WILL BE DISPLAYED
-		if(error)
-		{
-			//DISPLAY ANY ERROR MESSAGE HERE THAT HAPPENS BEFORE COMMAND EXECUTION
-			printf("%s\n",errorMessage);
-		}
-		else
+		if(!error)
 		{
 			
 			//SEPERATE CASES FOR IOREDIRECT, PIPING, BACKGROUND, EXTERNAL, AND INTERNAL COMMANDS EX
@@ -338,14 +337,27 @@ int main()
 			{
 				if(strcmp(tokens->items[0], "exit") == 0)//EXIT INTERNAL COMMAND (PART 9)
 				{
-					if(totalCommandHistory >= 3)//IF 3, PRINT LAST 3 JOBS (NO ORDER)
+					//DECREMENT BACKGROUND PROCCESSES WHEN COMPLETED FOR BACKGROUND PROCESSING (PART 8) AND
+					for(int i = 0; i < 10; i++)//JOBS INTERNAL COMMAND EXECUTION (PART 9)
+					{
+						pid_t pid = 0;
+						if(jobList[i].jobNumber > 0)
+							pid = waitpid(jobList[i].pid, NULL, WNOHANG);
+						if(pid <= 0 && jobList[i].jobNumber > 0)
+						{
+							printf("You must wait for all processeses to finish first.\n");
+							error = true;
+							break;
+						}
+					}
+					if(!error && totalCommandHistory >= 3)//IF 3, PRINT LAST 3 JOBS (NO ORDER)
 					{
 						printf("Last (3) valid commands:\n");
 						printf("[1]: %s\n", cmd0);
 						printf("[2]: %s\n", cmd1);
 						printf("[3]: %s\n", cmd2);
 					}
-					else if(totalCommandHistory > 0)//IF <3 & >0, PRINT AS MANY AS CAN FIND (1 OR 2)
+					else if(!error && totalCommandHistory > 0)//IF <3 & >0, PRINT AS MANY AS CAN FIND (1 OR 2)
 					{
 						printf("Last valid command(s):\n");
 						if(totalCommandHistory%3 == 1)
@@ -355,11 +367,12 @@ int main()
 						else if(totalCommandHistory%3 == 3)
 							printf("[1]: %s\n", cmd2);
 					}
-					else//IF THERE ARE NONE, SAY SO
+					else if(!error)//IF THERE ARE NONE, SAY SO
 					{
 						printf("No valid commands in history.\n");
 					}
-					exit(0);
+					if(!error)
+						exit(0);
 				}
 				else if(strcmp(tokens->items[0], "cd") == 0)//CD INTERNAL COMMAND EXECUTION (PART 9)
 				{//IF TOO MANY ARGUMENTS, SAY SO
@@ -376,7 +389,7 @@ int main()
 					else if(chdir(tokens->items[1]) != 0)
 					{//CHECKS IF DIRECTORY EXISTS. IF NOT, SAY SO
 						if(access(tokens->items[1], F_OK) != 0)
-    						printf("ERROR: directory does not exist\n");
+    						printf("ERROR: not a directory or directory does not exist\n");
 						else//IF NOT A DIRECTORY, SAYS SO
 							printf("ERROR: not a directory\n");
 						error = true;
@@ -384,14 +397,18 @@ int main()
 				}//JOBS INTERNAL COMMAND EXECUTION (PART 9)
 				else if(strcmp(tokens->items[0], "jobs") == 0)
 				{
+					bool none = true;
 					for (int i = 0; i < 10; i++) //PRINTS OUT ALL THE JOBS (IN STRUCTURE)
 					{
 						if(jobList[i].jobNumber > 0)
 						{
-							printf("[%d]+ %d %s\n", jobList[i].jobNumber, jobList[i].pid, 
+							printf("[%d]+ [%d] [%s]\n", jobList[i].jobNumber, jobList[i].pid, 
 							jobList[i].commandLine);
+							none = false;
 						}
 					}
+					if(none)
+						printf("No active background processes.\n");
 				}//PART 5 (NO PIPE OR IO)
 				else if(access(tokens->items[0], F_OK) == 0 && access(tokens->items[0], X_OK) == 0)
 				{
@@ -471,8 +488,10 @@ int main()
 				int pipe1[2], pipe2[2];
 				//Create the first pipe
 				if (pipe(pipe1) == -1) {
-					perror("pipe1 failed");
+					printf("pipe1 failed");
+					error = true;
 					exit(EXIT_FAILURE);
+					continue;
 				}
 
 				//Execute the first command
@@ -483,8 +502,10 @@ int main()
 				//If there's a third command, create another pipe and set up for the second command
 				if (pipe2index > 0) {//checks if pipe2index exists (there is a second pipe)
 					if (pipe(pipe2) == -1) {
-						perror("pipe2 failed");
+						printf("pipe2 failed");
 						exit(EXIT_FAILURE);
+						error = true;
+						continue;
 					}
 					execute_command(command2tokens, pipe1[0], pipe2[1], backgroundprocess, tempcmd, 
 					false);//false because is not last command (for background exec)
@@ -604,11 +625,17 @@ int main()
 								rediri = open(file3, O_RDONLY);
 								if(rediri == -1)
 								{
-									perror("The file requested does not exist or is not regular.");
-									break;
+									error = true;
+									printf("The file requested does not exist or is not regular\n");
+									close(rediri);
+									dup2(infd, STDIN_FILENO);
+									close(infd);
+									continue;
 								}
 							}
 						}
+						if(rediri == -1)
+							continue;
 						outfd = dup(STDOUT_FILENO);
 						close(STDOUT_FILENO);
 						rediro = open(file2, O_CREAT | O_RDWR | O_TRUNC, S_IRUSR | S_IWUSR);
@@ -634,8 +661,9 @@ int main()
 								}
 								else
 								{
-									perror("ERROR: Command not found or not executable.\n");
+									printf("ERROR: Command not found or not executable.\n");
 									error = true;
+									continue;
 								}
 							}
 							else {//INCREMENT COUNT AND ADD TO JOB STRUCTURE FOR JOBS (PART 8)
@@ -658,7 +686,7 @@ int main()
 								else if(jobsRunning > 10)
 								{
 									error = true;
-									perror("ERROR: maximum number of jobs to display reached\n");
+									printf("ERROR: maximum number of jobs to display reached\n");
 								}
 								waitpid(pid, &status, WNOHANG);
 							}
@@ -681,10 +709,14 @@ int main()
 						rediri = open(file2, O_RDONLY);
 						if(rediri == -1)
 						{
-							perror("The file requested does not exist or is not regular.");
-							break;
+							error = true;
+							printf("The file requested does not exist or is not regular.\n");
+							dup2(infd, STDIN_FILENO);
+							close(infd);
+							continue;
 						}
-		
+						if(rediri == -1)
+							continue;
 						if(io2index > 0)
 						{		//MULTISTEP
 							if(io2pointsleft == false)
@@ -716,8 +748,9 @@ int main()
 								}
 								else
 								{
-									perror("ERROR: Command not found or not executable.\n");
+									printf("ERROR: Command not found or not executable.\n");
 									error = true;
+									continue;
 								}
 							}
 							else {//INCREMENT COUNT AND ADD TO JOB STRUCTURE FOR JOBS (PART 8)
@@ -740,12 +773,13 @@ int main()
 								else if(jobsRunning > 10)
 								{
 									error = true;
-									perror("ERROR: maximum number of jobs to display reached\n");
+									printf("ERROR: maximum number of jobs to display reached\n");
 								}
 								waitpid(pid, &status, WNOHANG);
 							}
 						}
-		
+						if(error == true)
+							continue;
 						dup2(infd, STDIN_FILENO);
 		                close(infd);
 		
@@ -814,6 +848,10 @@ int main()
 		free_tokens(tokens);
 		free(pwd);
 	}
+	free(cmd0);
+	free(cmd1);
+	free(cmd2);
+	free(tempcmd);
 
 	return 0;
 }
