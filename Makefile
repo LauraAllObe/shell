@@ -8,6 +8,7 @@ OBJS := $(patsubst $(SRC)/%.c,$(OBJ)/%.o,$(SRCS))
 INCS := -Iinclude/
 DIRS := $(OBJ)/ $(BIN)/
 EXEC := $(BIN)/$(EXECUTABLE)
+MYTIMEOUT_OBJ := $(BIN)/mytimeout
 
 CC := gcc
 CFLAGS := -g -Wall -std=c99 $(INCS)
@@ -15,8 +16,12 @@ LDFLAGS :=
 
 all: $(EXEC)
 
-bin/mytimeout: src/mytimeout/mytimeout.c 
-	gcc -g -Wall -std=c99 -o bin/mytimeout src/mytimeout/mytimeout.c
+$(BIN)/mytimeout: $(SRC)/mytimeout/mytimeout.c
+	$(CC) $(CFLAGS) -c $< -o $@
+	chmod +x $@
+
+$(EXEC): $(OBJS) $(MYTIMEOUT_OBJ)
+	$(CC) $(CFLAGS) $(OBJS) $(MYTIMEOUT_OBJ) -o $(EXEC)
 
 $(EXEC): $(OBJS)
 	$(CC) $(CFLAGS) $(OBJS) -o $(EXEC)
@@ -28,7 +33,8 @@ run: $(EXEC)
 	$(EXEC)
 
 clean:
-	rm $(OBJ)/*.o $(EXEC)
+	rm $(OBJ)/*.o $(EXEC) $(MYTIMEOUT)
+	rm $(OBJ)/*.o $(MYTIMEOUT)
 
 $(shell mkdir -p $(DIRS))
 
