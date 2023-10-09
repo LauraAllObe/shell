@@ -160,9 +160,23 @@ int main()
 			//FOR part 10 (mytimeout)
 			if(strcmp(tokens->items[i], "./mytimeout") == 0)
 			{
-				tokens->items[0] = (char *)realloc(tokens->items[0], strlen(pwd) + 1);
+				char* myTimeout = "/bin/mytimeout";
+				tokens->items[i] = (char *)realloc(tokens->items[i], strlen(pwd) + 1 
+				+ strlen(myTimeout));
+				strncpy(tokens->items[i], pwd, strlen(pwd));
+				strcat(tokens->items[i], myTimeout);
+				wantToExpand = false;
+			}
+
+			//EXTRA CREDIT #3 (EXECUTE SHELL WITHIN SHELL), THIS EXPANDS BIN/SHELL AND
+			if(strcmp(tokens->items[i], "./bin/shell") == 0 //./BIN/SHELL TO FULL PATH
+			|| strcmp(tokens->items[i], "bin/shell") == 0 )
+			{
+				char* shell = "/bin/shell";
+				tokens->items[0] = (char *)realloc(tokens->items[0], strlen(pwd) + 1 
+				+ strlen(shell));
 				strncpy(tokens->items[0], pwd, strlen(pwd));
-				strcat(tokens->items[0], "/bin/mytimeout");
+				strcat(tokens->items[0], shell);
 				wantToExpand = false;
 			}
 
@@ -201,16 +215,18 @@ int main()
 				{
 					//Assign space for the expanded path
 					//using malloc() to allocate the requested memory and return pointer to it
-					char *expandedPath = (char *)malloc(strlen(home) 
-					+ strlen(tokens->items[i]) + 1);
+					char *expandedPath;
+					expandedPath = (char *)malloc(strlen(home) + strlen(tokens->items[i]) + 1);
 					//creating expanded path
 					strcpy(expandedPath, home);
 					strcat(expandedPath, tokens->items[i] + 1);
 
+					tokens->items[i] = (char *)realloc(tokens->items[i], 
+					strlen(expandedPath) + 1);
+					strcpy(tokens->items[i], expandedPath);
 					//using free() to deallocates tokens previous memory
-					free(tokens->items[i]);
 					//Updating tokens with expanded path
-					tokens->items[i] = expandedPath;
+					free(expandedPath);
 				}
 				else  //Show error message if $HOME is not set
 				{
