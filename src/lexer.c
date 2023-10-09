@@ -224,6 +224,8 @@ int main()
 				wantToExpand = true;
 			else if(i != 0 && strcmp(tokens->items[i-1],"|") != 0)
 				wantToExpand = false;
+			if(isTimeout == true && i > 1)
+				wantToExpand = true;
 				
 			//IF THE TOKEN IS NOT ALREADY AN EXECUTABLE PATH AND WE WANT TO EXPAND,
 			//THEN DO PATH SEARCH (PT4) AND EXPAND EACH COMMAND
@@ -249,7 +251,7 @@ int main()
 						strcpy(tokens->items[i], executable);
                         //printf("~~New token:%s\n",tokens->items[i]);
 						//isExecutable = true;
-						break;	
+						//break;	
 					}
 					token = strtok(NULL, ":");
 				}
