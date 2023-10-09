@@ -105,6 +105,7 @@ int main()
 	int rediro = 0;
 	while (1) {
 		error = false;
+		bool isTimeout = false;
 		size_t size = 0;
 		size = pathconf(".", _PC_PATH_MAX);
 		//ENVIRONMENTAL VARIABLES FOR PROMPT (PART 1)
@@ -166,6 +167,7 @@ int main()
 				strncpy(tokens->items[i], pwd, strlen(pwd));
 				strcat(tokens->items[i], myTimeout);
 				wantToExpand = false;
+				isTimeout = true;
 			}
 
 			//EXTRA CREDIT #3 (EXECUTE SHELL WITHIN SHELL), THIS EXPANDS BIN/SHELL AND
@@ -318,6 +320,10 @@ int main()
 			//(PART 9) BACKGROUND PROCESSING (EXCLUDING IO AND PIPE)
 			if(tokens->size != 0 && tokens->items[tokens->size -1][0] == '&' && IOorPipe == false)
 			{
+				for(int i = 0; i < tokens->size; i++)
+				{
+					printf("token %d is %s\n", i, tokens->items[i]);
+				}
 				int status;
 				pid_t pid = fork();
 				if(pid == 0) {
@@ -435,7 +441,8 @@ int main()
 					if(none)
 						printf("No active background processes.\n");
 				}//PART 5 (NO PIPE OR IO)
-				else if(access(tokens->items[0], F_OK) == 0 && access(tokens->items[0], X_OK) == 0)
+				else if((access(tokens->items[0], F_OK) == 0 && access(tokens->items[0], X_OK) == 0) 
+				|| isTimeout == true)
 				{
 					int status;
 					pid_t pid = fork();

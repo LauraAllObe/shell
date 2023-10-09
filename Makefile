@@ -17,7 +17,7 @@ LDFLAGS :=
 all: $(EXEC)
 
 $(BIN)/mytimeout: $(SRC)/mytimeout/mytimeout.c
-	$(CC) $(CFLAGS) -c $< -o $@
+	$(CC) $(CFLAGS) $< -o $@
 	chmod +x $@
 
 $(EXEC): $(OBJS) $(MYTIMEOUT_OBJ)
@@ -33,8 +33,7 @@ run: $(EXEC)
 	$(EXEC)
 
 clean:
-	rm $(OBJ)/*.o $(EXEC) $(MYTIMEOUT)
-	rm $(OBJ)/*.o $(MYTIMEOUT)
+	rm $(OBJ)/*.o $(EXEC) $(MYTIMEOUT_OBJ)
 
 $(shell mkdir -p $(DIRS))
 
