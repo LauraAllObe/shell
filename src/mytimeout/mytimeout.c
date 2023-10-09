@@ -47,6 +47,7 @@ void alarm_handler(int signum) {
 }
 
 int main(int argc, char *argv[]){
+    printf("REACHED MYTIMEOUT!");
 //printf("%d", argc);
     if (argc < 3) {
         printf("Usage: ./mytimeout [snds] [cmd] [cmd-args].\n");

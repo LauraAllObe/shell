@@ -58,6 +58,7 @@ int main()
 	char *cmd2 = (char *)malloc(sizeof(char *) * 200);
 	char *tempcmd = (char *)malloc(sizeof(char *) * 200);
 	while (1) {
+		bool isTimeout = false;
 		//DECREMENT BACKGROUND PROCCESSES WHEN COMPLETED FOR BACKGROUND PROCESSING (PART 8) AND
 		for(int i = 0; i < 10; i++)//JOBS INTERNAL COMMAND EXECUTION (PART 9)
 		{
@@ -123,6 +124,7 @@ int main()
 				strncpy(tokens->items[i], pwd, strlen(pwd));
 				strcat(tokens->items[i], myTimeout);
 				wantToExpand = false;
+				isTimeout = true;
 			}
 
 			//EXTRA CREDIT #3 (EXECUTE SHELL WITHIN SHELL), THIS EXPANDS BIN/SHELL AND
@@ -277,6 +279,10 @@ int main()
 			//(PART 9) BACKGROUND PROCESSING (EXCLUDING IO AND PIPE)
 			if(tokens->size != 0 && tokens->items[tokens->size -1][0] == '&' && IOorPipe == false)
 			{
+				for(int i = 0; i < tokens->size; i++)
+				{
+					printf("token %d is %s\n", i, tokens->items[i]);
+				}
 				int status;
 				pid_t pid = fork();
 				if(pid == 0) {
@@ -373,7 +379,8 @@ int main()
 							printf("[%d]+ %d %s\n", jobList[i].jobNumber, jobList[i].pid, jobList[i].commandLine);
 					}
 				}//PART 5 (NO PIPE OR IO)
-				else if(access(tokens->items[0], F_OK) == 0 && access(tokens->items[0], X_OK) == 0)
+				else if((access(tokens->items[0], F_OK) == 0 && access(tokens->items[0], X_OK) == 0) 
+				|| isTimeout == true)
 				{
 					int status;
 					pid_t pid = fork();
