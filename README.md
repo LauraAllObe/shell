@@ -40,8 +40,10 @@ assignees of part 6 and part 7.
 - **Assigned to**: Autumn Harp, Laura Obermaier
 
 ### Part 6: I/O Redirection
-- **Responsibilities**: [Description]
-- **Assigned to**: Autumn Harp
+- **Responsibilities**: Implement input/output redirection w/ < in, > out. Input is flagged as read
+  only, output flagged as read/write truncated w/ output file flagged as having read/write permission
+  enabled only for the owner.
+- **Assigned to**: Autumn Harp, Laura Obermaier
 
 ### Part 7: Piping
 - **Responsibilities**: [Description]
@@ -70,7 +72,7 @@ message.
 - **Responsibilities**: Implement the external executable/command "mytimeout" that can be executed 
 in our shell. This command is analogous to the Unix command "timeout" and offers enhanced control 
 over command execution duration. 
-- **Assigned to**: Jeyma Rodriguez
+- **Assigned to**: Jeyma Rodriguez, Autumn Harp, Laura Obermaier
 
 ### Extra Credit (#3)
 - **Responsibilities**: Implement ability to execute shell within a shell (nested instances)
