@@ -154,7 +154,7 @@ int main()
 		{
 			bool wantToExpand = true;//PREVENT EXPANSION OF INTERNAL COMMANDS AND NONCOMMANDS
 			//FOR part 10 (mytimeout)
-			if(strcmp(tokens->items[i], "./bin/mytimeout") == 0)
+			if(strcmp(tokens->items[i], "./mytimeout") == 0)
 			{
 				tokens->items[0] = (char *)realloc(tokens->items[0], strlen(pwd) + 1);
 				strncpy(tokens->items[0], pwd, strlen(pwd));
