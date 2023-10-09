@@ -152,13 +152,14 @@ int main()
 		//ITERATE THROUGH TOKENS FOR ENVIRONMENT VARIABLE EXPANSION (PART 2)
 		for (int i = 0; i < tokens->size; i++)
 		{
-			//EXTRA CREDIT #3 (EXECUTE SHELL WITHIN SHELL), THIS EXPANDS BIN/SHELL AND
-			if(strcmp(tokens->items[i], "./bin/shell") == 0 //./BIN/SHELL TO FULL PATH
-			|| strcmp(tokens->items[i], "bin/shell") == 0 )
+			bool wantToExpand = true;//PREVENT EXPANSION OF INTERNAL COMMANDS AND NONCOMMANDS
+			//FOR part 10 (mytimeout)
+			if(strcmp(tokens->items[i], "./bin/mytimeout") == 0)
 			{
 				tokens->items[0] = (char *)realloc(tokens->items[0], strlen(pwd) + 1);
 				strncpy(tokens->items[0], pwd, strlen(pwd));
-				strcat(tokens->items[0], "/bin/shell");
+				strcat(tokens->items[0], "/bin/mytimeout");
+				wantToExpand = false;
 			}
 
 			//IF CURRENT TOKEN IS AN ENVIRONMENTAL VARIABLE
@@ -228,7 +229,6 @@ int main()
 			//bool isExecutable = false;
 
 			//PATH SEARCH (PART 4)
-			bool wantToExpand = true;//PREVENT EXPANSION OF INTERNAL COMMANDS AND NONCOMMANDS
 			if(strcmp(tokens->items[i], "cd") == 0)
 				wantToExpand = false;
 			else if(strcmp(tokens->items[i], "exit") == 0)
