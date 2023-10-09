@@ -271,8 +271,10 @@ int main()
 				wantToExpand = true;
 			else if(i != 0 && strcmp(tokens->items[i-1],"|") != 0)
 				wantToExpand = false;
-							
-						//IF THE TOKEN IS NOT ALREADY AN EXECUTABLE PATH AND WE WANT TO EXPAND,
+			if(isTimeout == true && i > 1)
+				wantToExpand = true;
+				
+			//IF THE TOKEN IS NOT ALREADY AN EXECUTABLE PATH AND WE WANT TO EXPAND,
 			//THEN DO PATH SEARCH (PT4) AND EXPAND EACH COMMAND
 			if((access(tokens->items[i], F_OK) != 0 || access(tokens->items[i], X_OK) != 0)
 			&& wantToExpand == true)
