@@ -11,8 +11,8 @@
 pid_t child_pid = 0;
 //part 10
 
-/*signal handler for the alarm signal. This handler will be triggered when a process receives an SIGALRM
- signal, which will be sent when the timer we'll set (with alarm()) expires.*/
+/*signal handler for the alarm signal. This handler will be triggered when a process receives 
+an SIGALRM signal, which will be sent when the timer we'll set (with alarm()) expires.*/
 void alarm_handler(int signum) {
      if (child_pid != 0) {
         kill(child_pid, SIGTERM);
@@ -34,7 +34,7 @@ int main(int argc, char *argv[]){
     
     pid_t pid = fork();
     if(pid == -1){
-        perror("fork");
+        printf("fork");
         return 0;
     }
     if(pid == 0){

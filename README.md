@@ -1,13 +1,18 @@
-[![Review Assignment Due Date](https://classroom.github.com/assets/deadline-readme-button-24ddc0f5d75046c5622901739e7c5dd533143b0c8e959d652212380cedb1ea36.svg)](https://classroom.github.com/a/wtw9xmrw)
+[![Review Assignment Due Date](https://classroom.github.com/assets/deadline-readme-button-24ddc0f5d75046c5622901739e7c5dd533143b0c8e959d652212380cedb1ea36.svg)]
+(https://classroom.github.com/a/wtw9xmrw)
 [![Review Assignment Due Date](https://classroom.github.com/assets/deadline-readme-button-24ddc0f5d75046c5622901739e7c5dd533143b0c8e959d652212380cedb1ea36.svg)]
 (https://classroom.github.com/a/wtw9xmrw)
 # Shell
-This project is centered around the development of a custom shell interface. The primary objective is to create a sophisticated command-line environment that allows users to interact seamlessly with the underlying system.
+This project is centered around the development of a custom shell interface. The primary objective 
+is to create a sophisticated command-line environment that allows users to interact seamlessly with 
+the underlying system.
 Key Features and Goals:
 -Efficient command execution: Ensuring commands run smoothly and effectively.
 -Advanced error handling: Minimizing user errors and enhancing system response.
--Intuitive user interaction: Creating a user-friendly environment with clear feedback and instruction.
--Integration of common shell features: Including but not limited to input/output redirection, piping, and background processing.
+-Intuitive user interaction: Creating a user-friendly environment with clear feedback and 
+instruction.
+-Integration of common shell features: Including but not limited to input/output redirection, 
+piping, and background processing.
 
 ## Group Members
 - **Jeyma Rodrìguez**: jdr21@fsu.edu
@@ -51,7 +56,10 @@ assignees of part 6 and part 7.
 - **Assigned to**: Autumn Harp, Laura Obermaier
 
 ### Part 7: Piping
-- **Responsibilities**: It handles a maximum of two pipes in any given command. Piping behavior follows the required project desription: <cmd1 | cmd2>,  <cmd1 | cmd2 | cmd3>. By adding a piping feature, we let data move easily between commands. This makes the computer's command tool more flexible and strong.
+- **Responsibilities**: It handles a maximum of two pipes in any given command. Piping behavior 
+follows the required project desription: <cmd1 | cmd2>,  <cmd1 | cmd2 | cmd3>. By adding a piping 
+feature, we let data move easily between commands. This makes the computer's command tool more 
+flexible and strong.
 - **Assigned to**: Jeyma Rodriguez
 
 ### Part 8: Background Processing
@@ -106,18 +114,14 @@ shell/
 make
 
 ### Execution
-.bin/shell, bin/shell, or make run
+.bin/shell or bin/shell
 
 ## Bugs
-- **Bug 1**: This is bug 1.
-- **Bug 2**: This is bug 2.
-- **Bug 3**: This is bug 3.
+N/A
 
 ## Extra Credit
-- **Extra Credit 1**: [Extra Credit Option]
-- **Extra Credit 2**: [Extra Credit Option]
 - **Extra Credit 3**: Assigned to Laura Obermaier, allows for nested instances of a shell (allows
 users to execute the shell within the shell by running ./bin/shell or bin/shell)
 
 ## Considerations
-[Description]
+N/A

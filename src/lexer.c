@@ -322,10 +322,6 @@ int main()
 			//(PART 9) BACKGROUND PROCESSING (EXCLUDING IO AND PIPE)
 			if(tokens->size != 0 && tokens->items[tokens->size -1][0] == '&' && IOorPipe == false)
 			{
-				for(int i = 0; i < tokens->size; i++)
-				{
-					printf("token %d is %s\n", i, tokens->items[i]);
-				}
 				int status;
 				pid_t pid = fork();
 				if(pid == 0) {
@@ -370,8 +366,8 @@ int main()
 			{
 				if(strcmp(tokens->items[0], "exit") == 0)//EXIT INTERNAL COMMAND (PART 9)
 				{
-					//DECREMENT BACKGROUND PROCCESSES WHEN COMPLETED FOR BACKGROUND PROCESSING (PART 8) AND
-					for(int i = 0; i < 10; i++)//JOBS INTERNAL COMMAND EXECUTION (PART 9)
+					//DECREMENT BACKGROUND PROCCESSES WHEN COMPLETED FOR BACKGROUND PROCESSING (PT8)
+					for(int i = 0; i < 10; i++)//AND JOBS INTERNAL COMMAND EXECUTION (PART 9)
 					{
 						pid_t pid = 0;
 						if(jobList[i].jobNumber > 0)
@@ -390,7 +386,7 @@ int main()
 						printf("[2]: %s\n", cmd1);
 						printf("[3]: %s\n", cmd2);
 					}
-					else if(!error && totalCommandHistory > 0)//IF <3 & >0, PRINT AS MANY AS CAN FIND (1 OR 2)
+					else if(!error && totalCommandHistory > 0)//IF <3 & >0, PRINT 1
 					{
 						printf("Last valid command(s):\n");
 						if(totalCommandHistory%3 == 1)
@@ -560,7 +556,7 @@ int main()
 				{
 					wait(NULL);
 					wait(NULL);
-					if (pipe2index > 0) wait(NULL); //checks if pipe2index exists (there is a second pipe)
+					if (pipe2index > 0) wait(NULL); //checks if pipe2index exists (is a second pipe)
 				}
 			}
 			else if(Pipe == false && IOorPipe == true)
@@ -569,7 +565,7 @@ int main()
 				//THIS INDICATES THE INDEX LOCATION OF THE FIRST < OR > SYMBOL
 				int io1index = 0;//IF GREATER THAN 0, IT IS TRUE THAT IO REDIRECTION IS TAKING PLACE
 				//THIS INDICATES THE INDEX LOCATION OF THE SECOND < OR > SYMBOL
-				int io2index = 0;//IF GREATER THAN 0, IT IS TRUE THAT TWO IO REDIRECTIONS ARE TAKING PLACE
+				int io2index = 0;//IF GREATER THAN 0, IT IS TRUE THAT IS TWO IO REDIRECTIONS
 				//IF TRUE, THIS INDICATES THAT IO REDIRECTION #1 IS <, > IF FALSE
 				bool io1pointsleft = false;
 				//IF TRUE, THIS INDICATES THAT IO REDIRECTION #2 IS <, > IF FALSE
