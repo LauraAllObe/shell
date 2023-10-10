@@ -51,8 +51,8 @@ assignees of part 6 and part 7.
 
 ### Part 6: I/O Redirection
 - **Responsibilities**: Implement input/output redirection w/ < in, > out. Input is flagged as read
-  only, output flagged as read/write truncated w/ output file flagged as having read/write permission
-  enabled only for the owner.
+  only, output flagged as read/write truncated w/ output file flagged as having read/write 
+  permission enabled only for the owner.
 - **Assigned to**: Autumn Harp, Laura Obermaier
 
 ### Part 7: Piping
@@ -96,8 +96,10 @@ over command execution duration.
 shell/
 │
 ├── src/
-│ └── lexer.c
-│
+│ ├── lexer.c
+| └── mytimeout
+│   └── mytimeout.c
+|
 ├── include/
 │ └── lexer.h
 │
