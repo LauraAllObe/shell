@@ -1,7 +1,3 @@
-[![Review Assignment Due Date](https://classroom.github.com/assets/deadline-readme-button-24ddc0f5d75046c5622901739e7c5dd533143b0c8e959d652212380cedb1ea36.svg)]
-(https://classroom.github.com/a/wtw9xmrw)
-[![Review Assignment Due Date](https://classroom.github.com/assets/deadline-readme-button-24ddc0f5d75046c5622901739e7c5dd533143b0c8e959d652212380cedb1ea36.svg)]
-(https://classroom.github.com/a/wtw9xmrw)
 # Shell
 This project is centered around the development of a custom shell interface. The primary objective 
 is to create a sophisticated command-line environment that allows users to interact seamlessly with 
@@ -14,6 +10,7 @@ instruction.
 -Integration of common shell features: Including but not limited to input/output redirection, 
 piping, and background processing.
 
+###### *Note: some implementations, such as I/O redirection and nested execution, are incomplete.*
 ## Group Members
 - **Jeyma Rodrìguez**: jdr21@fsu.edu
 - **Autumn Harp**: aom21a@fsu.edu
