@@ -30,21 +30,21 @@ wrongcommand
 sleep 2
 
 # Testing I/O redirection
-cat output.txt
+cat demoOutput.txt
 sleep 2
-ls > output.txt
-cat output.txt
+ls > demoOutput.txt
+cat demoOutput.txt
 sleep 2
-grep i < output.txt
+grep i < demoOutput.txt
 sleep 2
-grep o < output.txt > output.txt
-cat output.txt
+grep o < demoOutput.txt > demoOutput.txt
+cat demoOutput.txt
 sleep 2
 
 # Testing piping
-cat output.txt | grep o
+cat demoOutput.txt | grep o
 sleep 2
-cat output.txt | grep o | sleep 3
+cat demoOutput.txt | grep o | sleep 3
 sleep 2
 
 # Testing background processing
@@ -52,7 +52,7 @@ sleep 5 &
 ls | sleep 10 &
 ls > sleep 113 &
 sleep 50 < ls &
-grep a < output.txt > sleep 8 &
+grep a < demoOutput.txt > sleep 8 &
 
 #Testing jobs command
 jobs
