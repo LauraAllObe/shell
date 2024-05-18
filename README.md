@@ -49,7 +49,7 @@ from command execution with piping and I/O redirection, which was carried out by
 assignees of part 6 and part 7.
 - **Assigned to**: Autumn Harp, Laura Obermaier
 
-### Part 6: I/O Redirection
+### Part 6: I/O Redirection (NOT COMPLETED)
 - **Responsibilities**: Implement input/output redirection w/ < in, > out. Input is flagged as read
   only, output flagged as read/write truncated w/ output file flagged as having read/write 
   permission enabled only for the owner.
@@ -87,7 +87,7 @@ in our shell. This command is analogous to the Unix command "timeout" and offers
 over command execution duration. 
 - **Assigned to**: Jeyma Rodriguez, Autumn Harp, Laura Obermaier
 
-### Extra Credit (#3)
+### Extra Credit (#3, NOT COMPLETED)
 - **Responsibilities**: Implement ability to execute shell within a shell (nested instances)
 - **Assigned to**: Laura Obermaier
 
